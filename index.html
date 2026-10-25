@@ -1038,45 +1038,16 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 </div>
 </div>
 <div class="cd">
-<div class="ct"><span class="e">💰</span> 第一部分 · 正常价格</div>
+<div class="ct"><span class="e">💰</span> 充值比</div>
 <div class="fr">
 <div class="fg"><label class="fl">充值金额（元）</label><div class="iw"><input class="fi" type="number" id="ra" placeholder="如 100" oninput="c_cr()"><button class="cb" onclick="c_cl('ra')" type="button">✕</button></div></div>
 <div class="fg"><label class="fl">获得额度</label><div class="iw"><input class="fi" type="number" id="rq" placeholder="如 20000" oninput="c_cr()"><button class="cb" onclick="c_cl('rq')" type="button">✕</button></div></div>
 </div>
-<div class="hn">正常价格：1元 = ? 额度（可手动填，或由上方自动算出）。例：100元得20000额度，就是1元 = 200额度；正常1:1就填1。</div>
-<div class="fr s"><div class="fg"><label class="fl">1元 = 多少额度（正常）</label><div class="iw"><input class="fi" type="number" id="rp" placeholder="如 200" oninput="c_rm()"><button class="cb" onclick="c_cl('rp')" type="button">✕</button></div></div></div>
+<div class="hn">1元 = ? 额度（可手动填，或由上方自动算出）</div>
+<div class="fr s"><div class="fg"><div class="iw"><input class="fi" type="number" id="rp" placeholder="如 200" oninput="c_rm()"><button class="cb" onclick="c_cl('rp')" type="button">✕</button></div></div></div>
 <div class="rx" id="br" style="display:none">
 <div class="rr"><span class="rl">1元 = 额度</span><span class="rv" id="rd">—</span></div>
-<div class="rr"><span class="rl">正常单价 · 1额度 = 元</span><span class="rv g" id="rr2">—</span></div>
-</div>
-</div>
-<div class="cd">
-<div class="ct"><span class="e">🎁</span> 第二部分 · 实际充值（展示用）</div>
-<div class="fr">
-<div class="fg"><label class="fl">实际充值金额（元）</label><div class="iw"><input class="fi" type="number" id="aa" placeholder="如 50" oninput="c_ca()"><button class="cb" onclick="c_cl('aa')" type="button">✕</button></div></div>
-<div class="fg"><label class="fl">实际得到额度</label><div class="iw"><input class="fi" type="number" id="aq" placeholder="如 100" oninput="c_ca()"><button class="cb" onclick="c_cl('aq')" type="button">✕</button></div></div>
-</div>
-<div class="hn">只填你真实那笔：例：活动充50得100，就填 50 和 100。没充过、没有活动就不填，下面按正常单价算。</div>
-<div class="rx" id="abr" style="display:none">
-<div class="rr"><span class="rl">实际 1元 = 额度</span><span class="rv" id="aar">—</span></div>
-<div class="rr"><span class="rl">实际单价 · 1额度 = 元</span><span class="rv g" id="arp">—</span></div>
-</div>
-</div>
-<div class="cd">
-<div class="ct"><span class="e">⚖️</span> 折中单价与签到换算</div>
-<div class="hn" style="margin-top:0">折中单价 =（正常单价 + 实际单价）÷ 2；折中折扣 = 折中单价 ÷ 正常单价 × 10。例：正常单价1元、实际单价0.5元，折中单价0.75元，就是7.5折。</div>
-<div class="rx" id="mxr" style="display:none">
-<div class="rr"><span class="rl">正常单价（元/额度）</span><span class="rv" id="mnp">—</span></div>
-<div class="rr"><span class="rl">实际单价（元/额度）</span><span class="rv b" id="map">—</span></div>
-<div class="rr"><span class="rl">折中单价（元/额度）</span><span class="rv p" id="mmp">—</span></div>
-<div class="rr"><span class="rl">折中折扣</span><span class="rv y" id="mmd">—</span></div>
-</div>
-<div class="dv"></div>
-<div class="fr s"><div class="fg"><label class="fl">签到额度</label><div class="iw"><input class="fi" type="number" id="sq" placeholder="如 0.05" oninput="c_csq()"><button class="cb" onclick="c_cl('sq')" type="button">✕</button></div></div></div>
-<div class="hn">签到实际金额 = 签到额度 × 折中单价。例：0.05 × 0.75 = 0.0375元。没填实际充值时，用正常单价算。</div>
-<div class="rx" id="sqr" style="display:none">
-<div class="rr"><span class="rl">计算用单价（元/额度）</span><span class="rv" id="squ">—</span></div>
-<div class="rr"><span class="rl">签到换算实际金额（元）</span><span class="rv g" id="sqy">—</span></div>
+<div class="rr"><span class="rl">1额度 = 元</span><span class="rv g" id="rr2">—</span></div>
 </div>
 </div>
 <div class="sl">开始换算↓</div>
@@ -2410,21 +2381,11 @@ function c_st(i){document.querySelectorAll('.ti').forEach(function(t,j){t.classL
 function c_cl(id){var e=document.getElementById(id);e.value='';e.dispatchEvent(new Event('input'));e.focus()}
 function c_gv(id){var v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v}
 function c_fm(n,d){if(n===null||n===undefined||isNaN(n)||!isFinite(n))return'—';return d===undefined?parseFloat(n.toFixed(8)).toString():parseFloat(n.toFixed(d)).toString()}
-// 换算工具直接读填入的正式数值，不解析备注：正常单价来自第一部分
-// （正常充值金额/正常得额度，即站点的 normal_recharge_amount/normal_received_quota），
-// 实际单价来自第二部分（实际充值金额/实际得额度）；折中单价与看板的
-// effective_price_per_quota 同口径：两种价都有取平均，只有一种价就用它。
-function c_nup(){var r=c_gv('rp');return r&&r>0?1/r:null}
-function c_aup(){var a=c_gv('aa'),q=c_gv('aq');return a&&q&&a>0&&q>0?a/q:null}
-function c_bup(){var n=c_nup(),a=c_aup();if(n!==null&&a!==null)return (n+a)/2;if(n!==null)return n;if(a!==null)return a;return null}
-function c_gr(){var b=c_bup();return b?1/b:null}
+function c_gr(){var r=c_gv('rp');return r&&r>0?r:null}
 function c_gq(){return c_gv('rq')}
-function c_upd(){var n=c_nup(),a=c_aup(),b=c_bup();var ab=document.getElementById('abr');if(a!==null){ab.style.display='block';document.getElementById('aar').textContent=c_fm(c_gv('aq')/c_gv('aa'));document.getElementById('arp').textContent=c_fm(a,8)}else{ab.style.display='none'}var mx=document.getElementById('mxr');if(n!==null||a!==null){mx.style.display='block';document.getElementById('mnp').textContent=n!==null?c_fm(n,8):'—';document.getElementById('map').textContent=a!==null?c_fm(a,8):'—';document.getElementById('mmp').textContent=b!==null?c_fm(b,8):'—';document.getElementById('mmd').textContent=(n!==null&&a!==null)?c_fm(b/n*10,2)+' 折（'+c_fm(b/n,4)+'）':(n!==null?'—（未充值，不计算折扣）':'—')}else{mx.style.display='none'}var sq=c_gv('sq'),sb=document.getElementById('sqr');if(sq!==null&&sq>=0){sb.style.display='block';document.getElementById('squ').textContent=b!==null?c_fm(b,8):'需先填正常价或实际充值';document.getElementById('sqy').textContent=b!==null?c_fm(sq*b,8):'—'}else{sb.style.display='none'}}
-function c_ca(){c_upd();c_cpc();c_ctk();c_cbl();c_cav()}
-function c_csq(){c_upd()}
 function c_sbr(r){document.getElementById('br').style.display='block';document.getElementById('rd').textContent=c_fm(r);document.getElementById('rr2').textContent=c_fm(1/r,8)}
-function c_cr(){var a=c_gv('ra'),q=c_gv('rq');if(a&&q&&a>0){var r=q/a;document.getElementById('rp').value=c_fm(r);c_sbr(r)}else{var mr=c_gv('rp');if(mr&&mr>0)c_sbr(mr);else document.getElementById('br').style.display='none'}c_upd();c_cpc();c_ctk();c_cbl();c_cav()}
-function c_rm(){var r=c_gv('rp');if(r&&r>0)c_sbr(r);else document.getElementById('br').style.display='none';c_upd();c_cpc();c_ctk();c_cbl();c_cav()}
+function c_cr(){var a=c_gv('ra'),q=c_gv('rq');if(a&&q&&a>0){var r=q/a;document.getElementById('rp').value=c_fm(r);c_sbr(r)}else{var mr=c_gv('rp');if(mr&&mr>0)c_sbr(mr);else document.getElementById('br').style.display='none'}c_cpc();c_ctk();c_cbl();c_cav()}
+function c_rm(){var r=c_gv('rp');if(r&&r>0)c_sbr(r);else document.getElementById('br').style.display='none';c_cpc();c_ctk();c_cbl();c_cav()}
 function c_cpc(){var c=c_gv('pc'),r=c_gr(),q=c_gq(),b=document.getElementById('pcr');if(!c||c<=0){b.style.display='none';return}b.style.display='block';if(r){document.getElementById('pcy').textContent=c_fm(c/r,6);document.getElementById('pcp').textContent=c_fm(r/c)}else{document.getElementById('pcy').textContent='需填写比例';document.getElementById('pcp').textContent='—'}document.getElementById('pct').textContent=q?c_fm(Math.floor(q/c)):'需填写总额度'}
 function c_ctk(){var ip=c_gv('ip'),op=c_gv('op'),it=c_gv('it'),ot=c_gv('ot'),r=c_gr(),q=c_gq(),b=document.getElementById('tkr');var hp=(ip!==null&&ip>=0)||(op!==null&&op>=0),ht=(it!==null&&it>=0)||(ot!==null&&ot>=0);if(!hp||!ht){b.style.display='none';return}b.style.display='block';var ic=(ip||0)*(it||0)/1e6,oc=(op||0)*(ot||0)/1e6,tc=ic+oc;document.getElementById('iqc').textContent=c_fm(ic,6);document.getElementById('oqc').textContent=c_fm(oc,6);document.getElementById('tqc').textContent=c_fm(tc,6);document.getElementById('tyc').textContent=r&&tc>0?c_fm(tc/r,8):r?c_fm(0):'需填写比例';document.getElementById('ttt').textContent=q&&tc>0?c_fm(Math.floor(q/tc))+' 次':'—'}
 function c_cbl(){var rm2=c_gv('rmq'),u=c_gv('uq'),r=c_gr(),b=document.getElementById('blr'),hr=rm2!==null&&rm2>=0,hu=u!==null&&u>=0;if(!hr&&!hu){b.style.display='none';return}b.style.display='block';document.getElementById('rmy').textContent=hr&&r?c_fm(rm2/r,6):hr?'需填写比例':'—';var sh=hu?'flex':'none',sd=hu?'block':'none';document.getElementById('ud').style.display=sd;document.getElementById('uyr').style.display=sh;document.getElementById('tbqr').style.display=sh;document.getElementById('tbyr').style.display=sh;if(hu){document.getElementById('uy').textContent=r?c_fm(u/r,6):'需填写比例';var tq=(rm2||0)+u;document.getElementById('tbq').textContent=c_fm(tq);document.getElementById('tby').textContent=r?c_fm(tq/r,6):'需填写比例';if(hr&&tq>0){document.getElementById('pd').style.display='block';document.getElementById('pr').style.display='flex';document.getElementById('rpc').textContent=c_fm(rm2/tq*100,1)+'%'}else{document.getElementById('pd').style.display='none';document.getElementById('pr').style.display='none'}}else{document.getElementById('pd').style.display='none';document.getElementById('pr').style.display='none'}}
