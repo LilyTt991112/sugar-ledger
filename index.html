@@ -1,0 +1,2435 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<title>中转站账本看板</title>
+<style>
+:root{--shell-bg:#efeaf6;--shell-bar:#ffffff;--shell-line:#e3ddf0;--shell-text:#241f33;--shell-dim:#7a7391;--shell-accent:#6E4F9A}
+@media (prefers-color-scheme: dark){:root{--shell-bg:#100e17;--shell-bar:#1c1928;--shell-line:#322c47;--shell-text:#ece8f5;--shell-dim:#9a92b5;--shell-accent:#b39de0}}
+*{box-sizing:border-box}
+html{background:var(--shell-bg)}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--shell-text)}
+.tabbar{position:sticky;top:0;z-index:60;display:flex;gap:6px;padding:10px 12px calc(10px + env(safe-area-inset-top, 0px));padding-top:calc(10px + env(safe-area-inset-top, 0px));background:var(--shell-bar);border-bottom:1px solid var(--shell-line)}
+.tabbtn{flex:1;border:1px solid var(--shell-line);background:transparent;color:var(--shell-dim);border-radius:10px;padding:9px 4px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.tabbtn.active{background:var(--shell-accent);border-color:var(--shell-accent);color:#fff}
+.page[hidden]{display:none}
+
+.pg-p{
+  --accent: #6E4F9A;
+  --accent-light: #9B7FCC;
+  --accent-dim: rgba(110,79,154,.08);
+  --bg: #F4F3F7;
+  --bg-2: #FFFFFF;
+  --bg-3: #F0EEF5;
+  --text: #1A1922;
+  --text-2: #6B6780;
+  --text-3: #9E99B3;
+  --border: #E8E6EE;
+  --success: #5BA67D;
+  --danger: #C45B5B;
+  --warning: #D4A85F;
+  --radius: 8px;
+  --radius-lg: 14px;
+  --shadow: 0 2px 12px rgba(20,18,29,.07);
+  --font-heading: Georgia, 'Songti SC', 'STSong', serif;
+  --font-body: Georgia, 'Songti SC', 'STSong', 'PingFang SC', serif;
+  --font-display: Georgia, 'Songti SC', serif;
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+.pg-p *{ box-sizing: border-box; }
+.pg-p{ background: var(--bg); }
+.pg-p{
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(110,79,154,.08), rgba(244,243,247,0) 210px),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  letter-spacing: 0;
+  padding: 14px 12px 88px;
+}
+.pg-p button, .pg-p input, .pg-p select{ font: inherit; }
+.pg-p button{ -webkit-tap-highlight-color: transparent; }
+.pg-p .app{
+  width: min(430px, 100%);
+  margin: 0 auto;
+}
+.pg-p .topbar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.pg-p .brand{
+  min-width: 0;
+}
+.pg-p .eyebrow{
+  margin: 0 0 2px;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.pg-p h1{
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-heading);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: .98;
+}
+.pg-p .status{
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+  color: var(--text-2);
+  padding: 6px 10px;
+  font-size: 11px;
+  box-shadow: var(--shadow);
+}
+.pg-p .status::before{
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 7px;
+  background: var(--warning);
+}
+.pg-p .status.ok::before{ background: var(--success); }
+.pg-p .status.err::before{ background: var(--danger); }
+.pg-p .range-bar, .pg-p .category-bar{
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 7px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  padding: 2px 2px 10px;
+  scrollbar-width: none;
+}
+.pg-p .range-bar::-webkit-scrollbar, .pg-p .category-bar::-webkit-scrollbar{ display: none; }
+.pg-p .month-row{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.pg-p .month-row label{
+  flex: 0 0 auto;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pg-p .month-select{
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  outline: 0;
+  padding: 9px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.pg-p .month-select:focus{
+  border-color: var(--accent-light);
+  box-shadow: 0 0 0 3px var(--accent-dim), var(--shadow);
+}
+.pg-p .month-select.active{
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 600;
+}
+.pg-p .month-clear{
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  color: var(--text-2);
+  box-shadow: var(--shadow);
+  padding: 9px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pg-p .month-clear[hidden]{ display: none; }
+.pg-p .seg-btn, .pg-p .tag-btn{
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text-2);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .16s, color .16s, border-color .16s, transform .16s;
+}
+.pg-p .seg-btn{
+  padding: 7px 13px;
+  font-size: 12px;
+}
+.pg-p .tag-btn{
+  padding: 5px 11px;
+  font-size: 11px;
+}
+.pg-p .seg-btn:active, .pg-p .tag-btn:active, .pg-p .icon-btn:active, .pg-p .fab:active{ transform: scale(.97); }
+.pg-p .seg-btn.active, .pg-p .tag-btn.active{
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.pg-p .search-row{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px;
+  gap: 7px;
+  margin: 0 0 12px;
+}
+.pg-p .search-input{
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,.82);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  outline: 0;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+.pg-p .search-input:focus{
+  border-color: var(--accent-light);
+  box-shadow: 0 0 0 3px var(--accent-dim), var(--shadow);
+}
+.pg-p .search-clear{
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  color: var(--text-3);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.pg-p .dashboard{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+.pg-p .panel{
+  background: var(--bg-2);
+  border: 1px solid rgba(232,230,238,.8);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  min-width: 0; /* 新增：防止子元素撑开 */
+}
+.pg-p .summary-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.pg-p .metric{
+  min-width: 0;
+  border-radius: var(--radius);
+  background: var(--bg);
+  padding: 10px 8px 9px;
+}
+.pg-p .metric-label{
+  color: var(--text-3);
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+.pg-p .metric-value{
+  min-height: 25px;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+.pg-p .metric-value.income{ color: var(--success); }
+.pg-p .metric-value.expense{ color: var(--danger); }
+.pg-p .insight-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0 0 12px;
+}
+.pg-p .insight{
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 7px;
+  background: rgba(255,255,255,.6);
+}
+.pg-p .insight-label{
+  color: var(--text-3);
+  font-size: 10px;
+  margin-bottom: 3px;
+}
+.pg-p .insight-value{
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.pg-p .chart-row{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  align-items: center;
+}
+.pg-p .ring-wrap{
+  display: grid;
+  place-items: center;
+  min-height: 156px;
+}
+.pg-p .ring{
+  width: 154px;
+  height: 154px;
+}
+.pg-p .ring text{
+  font-family: var(--font-heading);
+  fill: var(--text);
+  text-anchor: middle;
+}
+.pg-p .ring .sub{
+  font-family: var(--font-body);
+  fill: var(--text-3);
+  font-size: 12px;
+}
+.pg-p .legend{
+  display: grid;
+  gap: 7px;
+}
+.pg-p .legend-item{
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  color: var(--text-2);
+  font-size: 12px;
+}
+.pg-p .dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.pg-p .legend-name{
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pg-p .legend-amount{
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.pg-p .monthly-item{
+  padding: 10px 0 12px;
+  border-bottom: 1px solid var(--border);
+}
+.pg-p .monthly-item:last-child{ border-bottom: 0; }
+.pg-p .monthly-month{
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.pg-p .monthly-lines{
+  display: grid;
+  gap: 4px;
+}
+.pg-p .monthly-line{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-2);
+  font-size: 12px;
+}
+.pg-p .monthly-line .mv{
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.pg-p .monthly-line .mv.income{ color: var(--success); }
+.pg-p .monthly-line .mv.expense{ color: var(--danger); }
+.pg-p .monthly-line .mv.neg{ color: var(--danger); }
+.pg-p .panel-head{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.pg-p .panel-title{
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  line-height: 1.2;
+}
+.pg-p .panel-note{
+  color: var(--text-3);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.pg-p .bars{
+  height: 164px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 18px;
+  gap: 6px;
+  align-items: end;
+  padding-top: 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.pg-p .bar-day{
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 6px;
+  height: 100%;
+  text-align: center;
+}
+.pg-p .bar-track{
+  position: relative;
+  min-height: 118px;
+  border-radius: 999px;
+  background: var(--bg-3);
+  overflow: hidden;
+}
+.pg-p .bar-expense, .pg-p .bar-income{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 2px;
+}
+.pg-p .bar-expense{ background: rgba(196,91,91,.78); }
+.pg-p .bar-income{ background: rgba(91,166,125,.78); }
+.pg-p .bar-label{
+  color: var(--text-3);
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.pg-p .content-grid{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+.pg-p .list-panel{
+  padding: 0;
+  overflow: hidden;
+}
+.pg-p .list-head{
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 14px 14px 8px;
+  gap: 10px;
+}
+.pg-p .list{
+  display: grid;
+}
+.pg-p .item{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background .14s;
+}
+.pg-p .item:hover{ background: var(--bg-3); }
+.pg-p .item:last-child{ border-bottom: 0; }
+.pg-p .item-main{
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.pg-p .item-line{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.pg-p .item-category{
+  min-width: 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pg-p .tag{
+  flex: 0 0 auto;
+  background: rgba(110,79,154,.1);
+  color: var(--accent);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+.pg-p .tag.income{
+  background: rgba(91,166,125,.13);
+  color: var(--success);
+}
+.pg-p .tag.expense{
+  background: rgba(196,91,91,.12);
+  color: var(--danger);
+}
+.pg-p .item-note{
+  color: var(--text-2);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pg-p .item-date{
+  color: var(--text-3);
+  font-size: 11px;
+}
+.pg-p .amount{
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pg-p .amount.income{ color: var(--success); }
+.pg-p .amount.expense{ color: var(--danger); }
+.pg-p .icon-btn{
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: background .16s, color .16s, border-color .16s, transform .16s;
+}
+.pg-p .icon-btn:hover{
+  background: rgba(196,91,91,.08);
+  border-color: rgba(196,91,91,.28);
+  color: var(--danger);
+}
+.pg-p .empty, .pg-p .loading{
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 14px;
+}
+.pg-p .fab{
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(110,79,154,.32);
+  z-index: 20;
+}
+.pg-p .modal-overlay{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(26,25,34,.28);
+  backdrop-filter: blur(4px);
+  z-index: 30;
+}
+.pg-p .modal-overlay.show{ display: flex; }
+.pg-p .modal{
+  width: min(430px, 100%);
+  background: var(--bg-2);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -16px 42px rgba(20,18,29,.16);
+  padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+}
+.pg-p .modal h2{
+  margin: 0 0 16px;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  text-align: center;
+}
+.pg-p .type-switch{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+  border-radius: var(--radius);
+  background: var(--bg-3);
+  padding: 4px;
+}
+.pg-p .type-btn{
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-2);
+  padding: 9px 10px;
+  cursor: pointer;
+}
+.pg-p .type-btn.active{
+  background: var(--bg-2);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}
+.pg-p .field{
+  display: grid;
+  gap: 6px;
+  margin-bottom: 13px;
+}
+.pg-p .field label{
+  color: var(--text-3);
+  font-size: 12px;
+}
+.pg-p .field input, .pg-p .field select{
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  padding: 11px 12px;
+  outline: 0;
+}
+.pg-p .field input:focus, .pg-p .field select:focus{
+  border-color: var(--accent-light);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.pg-p .modal-actions{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+.pg-p .btn{
+  border: 0;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  cursor: pointer;
+}
+.pg-p .btn.secondary{
+  background: var(--bg-3);
+  color: var(--accent);
+}
+.pg-p .btn.primary{
+  background: var(--accent);
+  color: #fff;
+}
+
+.pg-p .toast{
+  position: fixed;
+  left: 50%;
+  bottom: 94px;
+  transform: translateX(-50%) translateY(20px);
+  max-width: calc(100vw - 32px);
+  border-radius: 999px;
+  background: rgba(26,25,34,.9);
+  color: #fff;
+  padding: 9px 14px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s, transform .18s;
+  z-index: 50;
+}
+.pg-p .toast.show{
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+@media (max-width: 360px){.pg-p{ padding-left: 10px; padding-right: 10px; }
+.pg-p h1{ font-size: 32px; }
+.pg-p .status{ display: none; }
+.pg-p .metric-value{ font-size: 18px; }
+.pg-p .insight-value{ font-size: 10px; }
+.pg-p .item{
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+.pg-p .amount{ font-size: 12px; }
+
+}
+@media (min-width: 700px){.pg-p .app, .pg-p .modal{ width: min(620px, 100%); }
+
+}
+
+
+@media (prefers-color-scheme: dark){
+.pg-p{--bg:#16131f;--bg-2:#211c30;--bg-3:#2a243d;--text:#ede9f7;--text-2:#b6aecd;--text-3:#8f87ab;--border:#383151;--accent:#b39de0;--accent-light:#c9b6ee;--accent-dim:rgba(179,157,224,.16);--shadow:0 2px 12px rgba(0,0,0,.4)}
+.pg-p .status,.pg-p .search-input,.pg-p .insight,.pg-p .icon-btn,.pg-p .field input,.pg-p .field select{background:var(--bg-2);color:var(--text)}
+.pg-p .metric{background:var(--bg-3)}
+}
+
+.pg-r{--bg:#FFF5F5;--cb:#FFF;--cbd:#F3D9D9;--t:#4A3535;--ts:#9B8181;--a:#F2A7A7;--as:#FDDEDE;--st:#C48B8B;--dv:#F3E0E0;--g:#A8D8B9;--b:#A8C8F0;--p:#D0B8E8;--y:#F5E0A0;--warn:#E88;--sh:rgba(200,150,150,.08);--sum1:#F2A7A7;--sum2:#D0B8E8}
+.pg-r.dark{--bg:#1E1A2E;--cb:#2A2540;--cbd:#3D3658;--t:#E8E0F0;--ts:#9B90B0;--a:#C8A0E0;--as:#3D3060;--st:#C8A0E0;--dv:#3D3658;--g:#80C0A0;--b:#90B0D8;--p:#B898D0;--y:#D8C880;--warn:#E88;--sh:rgba(0,0,0,.2);--sum1:#D88FC0;--sum2:#6C5CE0}
+.pg-r *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.pg-r{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--t);min-height:100vh;transition:background .35s,color .35s;line-height:1.6}
+.pg-r .c{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+.pg-r .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:0 4px}
+.pg-r .hd h1{font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
+.pg-r .tt{cursor:pointer;font-size:20px}
+.pg-r .ydrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.pg-r .ydcell{background:var(--cb);border:1px solid var(--cbd);border-radius:12px;padding:7px 12px;line-height:1.3;box-shadow:0 2px 10px var(--sh)}
+.pg-r .ydcell .yl{font-size:12px;color:var(--ts);margin-bottom:2px;display:flex;align-items:center;gap:4px}
+.pg-r .ydcell .yv{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.pg-r .ydcell .yv.g{color:var(--g)}
+.pg-r .ydcell .yv.warn{color:var(--warn)}
+.pg-r .sum{background:linear-gradient(135deg,var(--sum1),var(--sum2));border-radius:16px;padding:20px;margin-bottom:12px;color:#FFF;box-shadow:0 4px 16px var(--sh)}
+.pg-r .sum .sl{font-size:13px;opacity:.85;margin-bottom:6px}
+.pg-r .sum .sv{font-size:32px;font-weight:700;margin-bottom:10px}
+.pg-r .sum .ss{display:flex;gap:16px;font-size:13px;opacity:.95;align-items:center;justify-content:space-between}
+.pg-r .nav{display:flex;gap:8px;margin-bottom:16px}
+.pg-r .navbtn{flex:1;text-align:center;padding:10px;border-radius:12px;background:var(--cb);border:1px solid var(--cbd);color:var(--st);font-size:13px;font-weight:600;text-decoration:none;transition:.2s}
+.pg-r .navbtn:hover{background:var(--as)}
+.pg-r .card{background:var(--cb);border:1px solid var(--cbd);border-radius:12px;padding:10px 12px;margin-bottom:8px;box-shadow:0 2px 12px var(--sh)}
+.pg-r .card .name{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+.pg-r .card .name .badge{font-size:11px;font-weight:500;padding:3px 8px;border-radius:8px;background:var(--as);color:var(--st)}
+.pg-r .row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+.pg-r .row .l{color:var(--ts)}
+.pg-r .row .v{font-weight:600;font-variant-numeric:tabular-nums}
+.pg-r .v.g{color:var(--g)}
+.pg-r .v.b{color:var(--b)}
+.pg-r .v.p{color:var(--p)}
+.pg-r .v.y{color:var(--y)}
+.pg-r .v.warn{color:var(--warn)}
+.pg-r .sum .v.g{color:var(--g);font-weight:700;font-size:17px;text-shadow:1.5px 0 0.5px #fff,-1.5px 0 0.5px #fff,0 1.5px 0.5px #fff,0 -1.5px 0.5px #fff,1.1px 1.1px 0.5px #fff,-1.1px 1.1px 0.5px #fff,1.1px -1.1px 0.5px #fff,-1.1px -1.1px 0.5px #fff}
+.pg-r .dv{height:1px;background:var(--dv);margin:8px 0}
+.pg-r .txw{margin-top:4px}
+.pg-r .txw summary{cursor:pointer;font-size:12px;color:var(--st);font-weight:600;list-style:none;display:flex;align-items:center;gap:4px;padding:2px 0}
+.pg-r .txw summary::-webkit-details-marker{display:none}
+.pg-r .txw summary::before{content:'▸';font-size:11px;transition:transform .2s}
+.pg-r .txw[open] summary::before{transform:rotate(90deg)}
+.pg-r .txlist{margin-top:6px;display:flex;flex-direction:column;gap:0}
+.pg-r .txrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-top:1px solid var(--dv)}
+.pg-r .txrow .txd{color:var(--ts);flex:0 0 auto;min-width:44px}
+.pg-r .txrow .txm{color:var(--ts);flex:1;padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.pg-r .txrow .txq{font-weight:600;font-variant-numeric:tabular-nums;flex:0 0 auto;color:var(--warn)}
+.pg-r .txempty{font-size:12px;color:var(--ts);padding:6px 0}
+.pg-r .txw summary .txright{margin-left:auto;display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.pg-r .txw summary .txdays{font-size:11px;font-weight:500;color:var(--ts)}
+.pg-r .txglobalbtn{width:100%;border:1px solid var(--cbd);background:var(--bg);color:var(--st);border-radius:10px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.5}
+.pg-r .txglobalbtn:active{transform:scale(.98)}
+.pg-r .txpreset{flex:1;border:1px solid var(--cbd);background:var(--bg);color:var(--ts);border-radius:10px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.pg-r .txpreset.active{background:var(--a);border-color:var(--a);color:#FFF}
+.pg-r .empty{text-align:center;color:var(--ts);padding:40px 0;font-size:14px}
+.pg-r .loading{text-align:center;color:var(--ts);padding:40px 0;font-size:14px}
+.pg-r .err{background:var(--as);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px}
+.pg-r .foldbtn{flex:0 0 auto;border:1px solid rgba(255,255,255,.65);background:rgba(255,255,255,.24);color:#FFF;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.pg-r .foldbtn:active{transform:scale(.97)}
+.pg-r .sortbar{background:var(--cb);border:1px solid var(--cbd);border-radius:12px;padding:8px 10px;margin-bottom:10px;box-shadow:0 2px 10px var(--sh)}
+.pg-r .sortbar .scur{font-size:12px;color:var(--ts);margin-bottom:6px;line-height:1.4}
+.pg-r .sortbar .scur b{color:var(--st);font-size:13px}
+.pg-r .sortbar .shint{margin-left:6px;font-size:11px}
+.pg-r .sortbtns{display:flex;flex-wrap:wrap;gap:6px}
+.pg-r .sortbtn{border:1px solid var(--cbd);background:var(--bg);color:var(--ts);border-radius:999px;padding:4px 11px;font-size:12px;cursor:pointer;font-family:inherit;line-height:1.5}
+.pg-r .sortbtn.active{background:var(--a);border-color:var(--a);color:#FFF;font-weight:700}
+.pg-r #rDaysList[hidden]{display:none}
+.pg-r .card .chead{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pg-r .card .cname{font-size:15px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-r .card .badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:7px;background:var(--as);color:var(--st);white-space:nowrap}
+.pg-r .card .cbal{margin-left:auto;font-size:11px;color:var(--ts);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pg-r .card .cbal b{font-size:15px;color:var(--t)}
+.pg-r .card .cbal .cg{color:var(--g);font-weight:700;font-size:12px}
+.pg-r .card .cmeta{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:11px;color:var(--ts);line-height:1.5;margin-top:3px;font-variant-numeric:tabular-nums}
+.pg-r .card .cmeta b{color:var(--t);font-weight:600}
+.pg-r .card .cmeta b.g{color:var(--g)}
+.pg-r .card .cmeta b.warn{color:var(--warn)}
+.pg-r .card .cmeta b.y{color:var(--y)}
+.pg-r .card .csub{font-size:11px;color:var(--ts);line-height:1.45;margin-top:2px;overflow-wrap:anywhere}
+
+
+.pg-c{--bg:#FFF5F5;--cb:#FFF;--cbd:#F3D9D9;--t:#4A3535;--ts:#9B8181;--a:#F2A7A7;--as:#FDDEDE;--ib:#FFF9F9;--ic:#F0D4D4;--ip:#D4AEAE;--st:#C48B8B;--tb:#F5E6E6;--tab:#F2A7A7;--tat:#FFF;--tt:#B08989;--rb:#FFF0F5;--rc:#F5D5E0;--tgb:#F0D4D4;--tgk:#FFF;--sh:rgba(200,150,150,.08);--dv:#F3E0E0;--g:#A8D8B9;--b:#A8C8F0;--p:#D0B8E8;--y:#F5E0A0}
+.pg-c.dark{--bg:#1E1A2E;--cb:#2A2540;--cbd:#3D3658;--t:#E8E0F0;--ts:#9B90B0;--a:#C8A0E0;--as:#3D3060;--ib:#332E4A;--ic:#4A4368;--ip:#6B6088;--st:#C8A0E0;--tb:#332E4A;--tab:#C8A0E0;--tat:#1E1A2E;--tt:#9B90B0;--rb:#2E2848;--rc:#4A4368;--tgb:#4A4368;--tgk:#C8A0E0;--sh:rgba(0,0,0,.2);--dv:#3D3658;--g:#80C0A0;--b:#90B0D8;--p:#B898D0;--y:#D8C880}
+.pg-c *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.pg-c{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--t);min-height:100vh;transition:background .35s,color .35s;line-height:1.6}
+.pg-c .c{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+.pg-c .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding:0 4px}
+.pg-c .hd h1{font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
+.pg-c .hd h1 .i{font-size:22px}
+.pg-c .tt{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.pg-c .tt .l{font-size:12px;color:var(--ts)}
+.pg-c .tr{width:44px;height:24px;background:var(--tgb);border-radius:12px;position:relative;transition:background .3s}
+.pg-c .tk{width:20px;height:20px;background:var(--tgk);border-radius:50%;position:absolute;top:2px;left:2px;transition:transform .3s,background .3s;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.pg-c.dark .tk{transform:translateX(20px)}
+.pg-c .cd{background:var(--cb);border:1px solid var(--cbd);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px var(--sh);transition:background .35s,border-color .35s;animation:ci .4s ease both}
+.pg-c .cd:nth-child(2){animation-delay:.05s}
+.pg-c .cd:nth-child(3){animation-delay:.1s}
+.pg-c .cd:nth-child(4){animation-delay:.15s}
+@keyframes ci{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.pg-c .ct{font-size:15px;font-weight:600;color:var(--st);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.pg-c .ct .e{font-size:16px}
+.pg-c .fr{display:flex;gap:12px;margin-bottom:12px}
+.pg-c .fr.s{display:block}
+.pg-c .fg{flex:1;min-width:0}
+.pg-c .fl{font-size:13px;color:var(--ts);margin-bottom:6px;display:block;font-weight:500}
+.pg-c .fi{width:100%;height:44px;border:1px solid var(--ic);border-radius:10px;padding:0 36px 0 14px;font-size:15px;color:var(--t);background:var(--ib);outline:none;transition:border-color .25s,background .35s,box-shadow .25s;font-family:inherit}
+.pg-c .fi::placeholder{color:var(--ip);font-size:13px}
+.pg-c .fi:focus{border-color:var(--a);box-shadow:0 0 0 3px var(--as)}
+.pg-c .hn{font-size:12px;color:var(--ts);margin-top:4px;margin-bottom:12px;padding:0 2px}
+.pg-c .dv{height:1px;background:var(--dv);margin:16px 0}
+.pg-c .rx{background:var(--rb);border:1px solid var(--rc);border-radius:12px;padding:14px 16px;margin-top:12px;transition:background .35s,border-color .35s}
+.pg-c .rr{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.pg-c .rr+.rr{margin-top:6px}
+.pg-c .rl{font-size:13px;color:var(--ts)}
+.pg-c .rv{font-size:15px;font-weight:600;color:var(--a);font-variant-numeric:tabular-nums}
+.pg-c .rv.g{color:var(--g)}
+.pg-c .rv.b{color:var(--b)}
+.pg-c .rv.p{color:var(--p)}
+.pg-c .rv.y{color:var(--y)}
+.pg-c .sl{font-size:13px;color:var(--ts);margin-bottom:10px;padding-left:4px;font-weight:500}
+.pg-c .iw{position:relative}
+.pg-c .iw .cb{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:var(--ic);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:12px;color:var(--cb);line-height:1;padding:0;transition:background .2s}
+.pg-c .iw .cb:hover{background:var(--a)}
+.pg-c .iw .fi:not(:placeholder-shown)~.cb{display:flex}
+.pg-c .tb{display:flex;gap:4px;background:var(--tb);border-radius:12px;padding:4px;margin-bottom:20px}
+.pg-c .ti{flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:500;color:var(--tt);border-radius:10px;cursor:pointer;transition:all .25s;user-select:none}
+.pg-c .ti.a{background:var(--tab);color:var(--tat);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.pg-c .ti:not(.a):hover{color:var(--t)}
+.pg-c .tp{display:none}
+.pg-c .tp.a{display:block}
+.pg-c .rb{width:100%;height:44px;border:1px dashed var(--ic);border-radius:12px;background:transparent;color:var(--ts);font-size:13px;cursor:pointer;transition:all .25s;font-family:inherit;margin-top:4px}
+.pg-c .rb:hover{border-color:var(--a);color:var(--a);background:var(--as)}
+.pg-c input[type="number"]::-webkit-inner-spin-button, .pg-c input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.pg-c input[type="number"]{-moz-appearance:textfield}
+@media(max-width:360px){.pg-c .c{padding:16px 12px 32px}
+.pg-c .cd{padding:16px}
+.pg-c .fr{gap:8px}}
+
+</style>
+</head>
+<body>
+<nav class="tabbar" aria-label="账本切换">
+  <button class="tabbtn active" id="tab-personal" type="button" onclick="switchPage('personal')">日常记账本</button>
+  <button class="tabbtn" id="tab-relay" type="button" onclick="switchPage('relay')">中转站账本</button>
+  <button class="tabbtn" id="tab-convert" type="button" onclick="switchPage('convert')">余额换算</button>
+</nav>
+<section class="page pg-p" id="page-personal">
+<main class="app">
+  <header class="topbar">
+    <div class="brand">
+      <p class="eyebrow">Ledger</p>
+      <h1>记账本</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div class="status" id="statusText">连接中</div>
+      <button type="button" onclick="p_showCfgModal()" style="border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.85);color:var(--text-2);padding:5px 10px;font-size:11px;cursor:pointer;box-shadow:var(--shadow);">⚙️ 配置</button>
+    </div>
+  </header>
+
+  <nav class="range-bar" id="rangeBar" aria-label="时间范围"></nav>
+  <div class="month-row">
+    <label for="monthSelect">单独查某月</label>
+    <select class="month-select" id="monthSelect" aria-label="选择指定年月" onchange="setSpecificMonth(this.value)">
+      <option value="">按上方范围查看</option>
+    </select>
+    <button class="month-clear" id="monthClearBtn" type="button" hidden onclick="clearSpecificMonth()">清除</button>
+  </div>
+  <nav class="category-bar" id="categoryBar" aria-label="分类筛选"></nav>
+  <div class="search-row">
+    <input class="search-input" id="searchInput" type="search" placeholder="搜索分类、备注、金额" oninput="setSearch(this.value)">
+    <button class="search-clear" type="button" aria-label="清空搜索" title="清空搜索" onclick="clearSearch()">×</button>
+  </div>
+
+  <section class="dashboard">
+    <div class="panel">
+      <div class="summary-grid">
+        <div class="metric">
+          <div class="metric-label">收入</div>
+          <div class="metric-value income" id="incomeTotal">¥0.00</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">支出</div>
+          <div class="metric-value expense" id="expenseTotal">¥0.00</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">结余</div>
+          <div class="metric-value" id="balanceTotal">¥0.00</div>
+        </div>
+      </div>
+      <div class="insight-grid">
+        <div class="insight">
+          <div class="insight-label">笔数</div>
+          <div class="insight-value" id="insightCount">0</div>
+        </div>
+        <div class="insight">
+          <div class="insight-label">日均支出</div>
+          <div class="insight-value" id="avgDailyExpense">¥0.00</div>
+        </div>
+        <div class="insight">
+          <div class="insight-label">最大支出</div>
+          <div class="insight-value" id="maxExpense">¥0.00</div>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 200 200" id="ringChart" role="img" aria-label="分类占比"></svg>
+        </div>
+        <div class="legend" id="categoryLegend"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Daily Trend</h2>
+        <span class="panel-note" id="trendNote">支出 / 收入</span>
+      </div>
+      <div class="bars" id="trendBars"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="monthlyPanel" style="display:none;margin:16px 0;">
+    <div class="panel-head"><h2 class="panel-title">按月汇总</h2><span class="panel-note" id="monthlyNote">半年 / 1年 / 全部时显示</span></div>
+    <div class="list" id="monthlyList"></div>
+  </section>
+
+  <section class="content-grid">
+    <div class="panel list-panel">
+      <div class="list-head">
+        <h2 class="panel-title">Bills</h2>
+        <span class="panel-note" id="billCount">0 笔</span>
+      </div>
+      <div class="list" id="billList">
+        <div class="loading">加载中...</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<button class="fab" type="button" aria-label="添加账单" onclick="showModal()">+</button>
+
+<div class="modal-overlay" id="modal" onclick="hideModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>记一笔</h2>
+    <div class="type-switch">
+      <button class="type-btn active" id="typeExpense" type="button" onclick="setEntryType('expense')">支出</button>
+      <button class="type-btn" id="typeIncome" type="button" onclick="setEntryType('income')">收入</button>
+    </div>
+    <div class="field">
+      <label for="inputAmount">金额</label>
+      <input type="number" id="inputAmount" placeholder="0.00" inputmode="decimal" step="0.01">
+    </div>
+    <div class="field">
+      <label for="inputCategory">分类</label>
+      <select id="inputCategory"></select>
+    </div>
+    <div class="field">
+      <label for="inputDate">日期（补记用，留空就是今天）</label>
+      <input type="date" id="inputDate">
+    </div>
+    <div class="field">
+      <label for="inputNote">备注</label>
+      <input type="text" id="inputNote" placeholder="写点什么">
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" type="button" onclick="hideModal()">取消</button>
+      <button class="btn primary" type="button" onclick="saveEntry()">记上</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="cfgModal" onclick="p_hideCfgModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>⚙️ 数据库安全连接配置</h2>
+    <p style="margin:-8px 0 14px;color:var(--text-2);font-size:12px;text-align:center;">密钥仅保存在你当前浏览器的本地缓存 (localStorage) 中，绝不上传至 GitHub 或第三方服务器</p>
+    <div class="field">
+      <label for="cfgUrl">Supabase URL</label>
+      <input type="url" id="cfgUrl" placeholder="https://xxxxx.supabase.co">
+    </div>
+    <div class="field">
+      <label for="cfgKey">Supabase Anon Key</label>
+      <input type="password" id="cfgKey" placeholder="eyJ...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" type="button" onclick="p_hideCfgModal()">取消</button>
+      <button class="btn primary" type="button" onclick="p_saveCfgLocal()">保存并连接</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</section>
+<section class="page pg-r" id="page-relay" hidden>
+<div class="c">
+<div class="hd">
+<h1>🌟 API余额总览</h1>
+<div style="display:flex;align-items:center;gap:10px;">
+  <button type="button" onclick="r_showCfgModal()" style="border:1px solid var(--cbd);border-radius:10px;background:var(--cb);color:var(--st);padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;">⚙️ 配置连接</button>
+  <span class="tt" onclick="r_tg()"><span id="rti">☀️</span></span>
+</div>
+</div>
+<div id="rcfgModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(3px);z-index:99;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target.id==='rcfgModal')r_hideCfgModal()">
+  <div style="width:min(420px,100%);background:var(--cb);border:1px solid var(--cbd);border-radius:16px;padding:20px;box-shadow:0 12px 32px rgba(0,0,0,.2);">
+    <h2 style="font-size:17px;margin-bottom:6px;color:var(--t);">⚙️ Supabase 安全连接配置</h2>
+    <p style="font-size:12px;color:var(--ts);margin-bottom:14px;">密钥仅保存在你当前浏览器本地缓存 (localStorage) 中，源码不含任何密钥，放 GitHub 或本地打开均安全。</p>
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:12px;color:var(--ts);margin-bottom:4px;">Supabase URL</label>
+      <input id="rcfgUrl" type="url" placeholder="https://xxxx.supabase.co" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--cbd);background:var(--bg);color:var(--t);font-size:14px;outline:none;">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-size:12px;color:var(--ts);margin-bottom:4px;">Supabase Anon Key</label>
+      <input id="rcfgKey" type="password" placeholder="eyJ..." style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--cbd);background:var(--bg);color:var(--t);font-size:14px;outline:none;">
+    </div>
+    <p id="rcfgMsg" style="color:var(--warn);font-size:12px;min-height:16px;margin-bottom:8px;"></p><div style="display:flex;gap:10px;">
+      <button type="button" onclick="r_hideCfgModal()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--cbd);background:transparent;color:var(--ts);font-weight:600;cursor:pointer;">取消</button>
+      <button type="button" onclick="r_saveCfgLocal()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--a);color:#fff;font-weight:600;cursor:pointer;">保存并刷新</button>
+    </div>
+  </div>
+</div>
+<div id="rtxModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(3px);z-index:99;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target.id==='rtxModal')r_closeTxDays()">
+  <div style="width:min(420px,100%);background:var(--cb);border:1px solid var(--cbd);border-radius:16px;padding:20px;box-shadow:0 12px 32px rgba(0,0,0,.2);">
+    <h2 style="font-size:17px;margin-bottom:6px;color:var(--t);">⚙️ 最近流水天数（全局设置）</h2>
+    <p style="font-size:12px;color:var(--ts);margin-bottom:14px;">所有站点卡片的「最近流水」统一只显示最近几天的记录，改一次全部生效。设置保存在你当前浏览器的本地存储里，下次打开还记得。</p>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button type="button" class="txpreset" data-days="3" onclick="r_pickTxDays(3)">3天</button>
+      <button type="button" class="txpreset" data-days="7" onclick="r_pickTxDays(7)">7天</button>
+      <button type="button" class="txpreset" data-days="14" onclick="r_pickTxDays(14)">14天</button>
+      <button type="button" class="txpreset" data-days="30" onclick="r_pickTxDays(30)">30天</button>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-size:12px;color:var(--ts);margin-bottom:4px;">自定义天数</label>
+      <input id="rtxCustom" type="number" min="1" max="3650" step="1" inputmode="numeric" placeholder="输入天数，如 5" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--cbd);background:var(--bg);color:var(--t);font-size:14px;outline:none;" oninput="r_pickTxDays(null)">
+    </div>
+    <p id="rtxMsg" style="color:var(--warn);font-size:12px;min-height:16px;margin-bottom:8px;"></p>
+    <div style="display:flex;gap:10px;">
+      <button type="button" onclick="r_closeTxDays()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--cbd);background:transparent;color:var(--ts);font-weight:600;cursor:pointer;">取消</button>
+      <button type="button" onclick="r_saveTxDays()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--a);color:#fff;font-weight:600;cursor:pointer;">保存</button>
+    </div>
+  </div>
+</div>
+<div class="nav"><a class="navbtn" href="#" onclick="switchPage('convert');return false">🧮 打开换算工具</a></div>
+<div id="root"><div class="loading">加载中…</div></div>
+</div>
+</section>
+<section class="page pg-c" id="page-convert" hidden>
+<div class="c">
+<div style="margin-bottom:12px"><a href="#" onclick="switchPage('relay');return false" style="color:var(--a);text-decoration:none;font-size:13px">← 返回站点总览</a></div>
+<div class="hd">
+<h1><span class="i">🌟</span> 余额换算</h1>
+<div class="tt" onclick="c_tg()">
+<span class="l">主题</span>
+<div class="tr"><div class="tk"><span id="cti">☀️</span></div></div>
+</div>
+</div>
+<div class="cd">
+<div class="ct"><span class="e">💰</span> 第一部分 · 正常价格</div>
+<div class="fr">
+<div class="fg"><label class="fl">充值金额（元）</label><div class="iw"><input class="fi" type="number" id="ra" placeholder="如 100" oninput="c_cr()"><button class="cb" onclick="c_cl('ra')" type="button">✕</button></div></div>
+<div class="fg"><label class="fl">获得额度</label><div class="iw"><input class="fi" type="number" id="rq" placeholder="如 20000" oninput="c_cr()"><button class="cb" onclick="c_cl('rq')" type="button">✕</button></div></div>
+</div>
+<div class="hn">正常价格：1元 = ? 额度（可手动填，或由上方自动算出）。例：100元得20000额度，就是1元 = 200额度；正常1:1就填1。</div>
+<div class="fr s"><div class="fg"><label class="fl">1元 = 多少额度（正常）</label><div class="iw"><input class="fi" type="number" id="rp" placeholder="如 200" oninput="c_rm()"><button class="cb" onclick="c_cl('rp')" type="button">✕</button></div></div></div>
+<div class="rx" id="br" style="display:none">
+<div class="rr"><span class="rl">1元 = 额度</span><span class="rv" id="rd">—</span></div>
+<div class="rr"><span class="rl">正常单价 · 1额度 = 元</span><span class="rv g" id="rr2">—</span></div>
+</div>
+</div>
+<div class="cd">
+<div class="ct"><span class="e">🎁</span> 第二部分 · 实际充值（展示用）</div>
+<div class="fr">
+<div class="fg"><label class="fl">实际充值金额（元）</label><div class="iw"><input class="fi" type="number" id="aa" placeholder="如 50" oninput="c_ca()"><button class="cb" onclick="c_cl('aa')" type="button">✕</button></div></div>
+<div class="fg"><label class="fl">实际得到额度</label><div class="iw"><input class="fi" type="number" id="aq" placeholder="如 100" oninput="c_ca()"><button class="cb" onclick="c_cl('aq')" type="button">✕</button></div></div>
+</div>
+<div class="hn">只填你真实那笔：例：活动充50得100，就填 50 和 100。没充过、没有活动就不填，下面按正常单价算。</div>
+<div class="rx" id="abr" style="display:none">
+<div class="rr"><span class="rl">实际 1元 = 额度</span><span class="rv" id="aar">—</span></div>
+<div class="rr"><span class="rl">实际单价 · 1额度 = 元</span><span class="rv g" id="arp">—</span></div>
+</div>
+</div>
+<div class="cd">
+<div class="ct"><span class="e">⚖️</span> 折中单价与签到换算</div>
+<div class="hn" style="margin-top:0">折中单价 =（正常单价 + 实际单价）÷ 2；折中折扣 = 折中单价 ÷ 正常单价 × 10。例：正常单价1元、实际单价0.5元，折中单价0.75元，就是7.5折。</div>
+<div class="rx" id="mxr" style="display:none">
+<div class="rr"><span class="rl">正常单价（元/额度）</span><span class="rv" id="mnp">—</span></div>
+<div class="rr"><span class="rl">实际单价（元/额度）</span><span class="rv b" id="map">—</span></div>
+<div class="rr"><span class="rl">折中单价（元/额度）</span><span class="rv p" id="mmp">—</span></div>
+<div class="rr"><span class="rl">折中折扣</span><span class="rv y" id="mmd">—</span></div>
+</div>
+<div class="dv"></div>
+<div class="fr s"><div class="fg"><label class="fl">签到额度</label><div class="iw"><input class="fi" type="number" id="sq" placeholder="如 0.05" oninput="c_csq()"><button class="cb" onclick="c_cl('sq')" type="button">✕</button></div></div></div>
+<div class="hn">签到实际金额 = 签到额度 × 折中单价。例：0.05 × 0.75 = 0.0375元。没填实际充值时，用正常单价算。</div>
+<div class="rx" id="sqr" style="display:none">
+<div class="rr"><span class="rl">计算用单价（元/额度）</span><span class="rv" id="squ">—</span></div>
+<div class="rr"><span class="rl">签到换算实际金额（元）</span><span class="rv g" id="sqy">—</span></div>
+</div>
+</div>
+<div class="sl">开始换算↓</div>
+<div class="tb">
+<div class="ti a" onclick="c_st(0)">按次计费</div>
+<div class="ti" onclick="c_st(1)">按量计费</div>
+<div class="ti" onclick="c_st(2)">总额计算</div>
+<div class="ti" onclick="c_st(3)">平均消耗</div>
+</div>
+<div class="tp a" id="p0"><div class="cd">
+<div class="ct"><span class="e">🔑</span> 按次计费</div>
+<div class="fr s"><div class="fg"><label class="fl">每次消耗额度</label><div class="iw"><input class="fi" type="number" id="pc" placeholder="如 5 或 0.5" oninput="c_cpc()"><button class="cb" onclick="c_cl('pc')" type="button">✕</button></div></div></div>
+<div class="rx" id="pcr" style="display:none">
+<div class="rr"><span class="rl">每次费用（元）</span><span class="rv" id="pcy">—</span></div>
+<div class="rr"><span class="rl">总额度可用次数</span><span class="rv b" id="pct">—</span></div>
+<div class="rr"><span class="rl">每元可用次数</span><span class="rv p" id="pcp">—</span></div>
+</div>
+</div></div>
+<div class="tp" id="p1"><div class="cd">
+<div class="ct"><span class="e">⚡</span> 按量计费（Token）</div>
+<div class="fr">
+<div class="fg"><label class="fl">输入价格（额度/M token）</label><div class="iw"><input class="fi" type="number" id="ip" placeholder="如 15 或 0.5" oninput="c_ctk()"><button class="cb" onclick="c_cl('ip')" type="button">✕</button></div></div>
+<div class="fg"><label class="fl">输出价格（额度/M token）</label><div class="iw"><input class="fi" type="number" id="op" placeholder="如 25 或 1.5" oninput="c_ctk()"><button class="cb" onclick="c_cl('op')" type="button">✕</button></div></div>
+</div>
+<div class="dv"></div>
+<div class="fr">
+<div class="fg"><label class="fl">本次输入（tokens）</label><div class="iw"><input class="fi" type="number" id="it" placeholder="如 1000" oninput="c_ctk()"><button class="cb" onclick="c_cl('it')" type="button">✕</button></div></div>
+<div class="fg"><label class="fl">本次输出（tokens）</label><div class="iw"><input class="fi" type="number" id="ot" placeholder="如 500" oninput="c_ctk()"><button class="cb" onclick="c_cl('ot')" type="button">✕</button></div></div>
+</div>
+<div class="rx" id="tkr" style="display:none">
+<div class="rr"><span class="rl">本次输入消耗额度</span><span class="rv" id="iqc">—</span></div>
+<div class="rr"><span class="rl">本次输出消耗额度</span><span class="rv b" id="oqc">—</span></div>
+<div class="rr"><span class="rl">本次合计消耗额度</span><span class="rv p" id="tqc">—</span></div>
+<div class="dv"></div>
+<div class="rr"><span class="rl">本次合计费用（元）</span><span class="rv" id="tyc">—</span></div>
+<div class="rr"><span class="rl">总额度可用约</span><span class="rv g" id="ttt">— 次</span></div>
+</div>
+</div></div>
+<div class="tp" id="p2"><div class="cd">
+<div class="ct"><span class="e">🎡</span> 总额计算</div>
+<div class="fr">
+<div class="fg"><label class="fl">当前剩余额度</label><div class="iw"><input class="fi" type="number" id="rmq" placeholder="如 15000" oninput="c_cbl()"><button class="cb" onclick="c_cl('rmq')" type="button">✕</button></div></div>
+<div class="fg"><label class="fl">已消耗额度（选填）</label><div class="iw"><input class="fi" type="number" id="uq" placeholder="如 5000" oninput="c_cbl()"><button class="cb" onclick="c_cl('uq')" type="button">✕</button></div></div>
+</div>
+<div class="hn">已消耗额度留空时，仅计算剩余部分的折合金额</div>
+<div class="rx" id="blr" style="display:none">
+<div class="rr"><span class="rl">剩余额度折合（元）</span><span class="rv g" id="rmy">—</span></div>
+<div class="dv" id="ud" style="display:none"></div>
+<div class="rr" id="uyr" style="display:none"><span class="rl">已消耗折合（元）</span><span class="rv" id="uy">—</span></div>
+<div class="rr" id="tbqr" style="display:none"><span class="rl">初始总额度</span><span class="rv b" id="tbq">—</span></div>
+<div class="rr" id="tbyr" style="display:none"><span class="rl">初始总额折合（元）</span><span class="rv p" id="tby">—</span></div>
+<div class="dv" id="pd" style="display:none"></div>
+<div class="rr" id="pr" style="display:none"><span class="rl">余额剩余比例</span><span class="rv y" id="rpc">—</span></div>
+</div>
+</div></div>
+<div class="tp" id="p3"><div class="cd">
+<div class="ct"><span class="e">📝</span> 平均消耗</div>
+<div class="fr">
+<div class="fg"><label class="fl">已消耗额度</label><div class="iw"><input class="fi" type="number" id="auq" placeholder="如 5000" oninput="c_cav()"><button class="cb" onclick="c_cl('auq')" type="button">✕</button></div></div>
+<div class="fg"><label class="fl">使用天数</label><div class="iw"><input class="fi" type="number" id="ad" placeholder="如 7" oninput="c_cav()"><button class="cb" onclick="c_cl('ad')" type="button">✕</button></div></div>
+</div>
+<div class="fr">
+<div class="fg"><label class="fl">总调用次数（选填）</label><div class="iw"><input class="fi" type="number" id="ac" placeholder="如 120" oninput="c_cav()"><button class="cb" onclick="c_cl('ac')" type="button">✕</button></div></div>
+<div class="fg"><label class="fl">当前剩余额度（选填）</label><div class="iw"><input class="fi" type="number" id="arq" placeholder="如 15000" oninput="c_cav()"><button class="cb" onclick="c_cl('arq')" type="button">✕</button></div></div>
+</div>
+<div class="hn">填已消耗额度+天数即可算日均；填剩余额度可算可用天数</div>
+<div class="rx" id="avr" style="display:none">
+<div class="rr"><span class="rl">日均消耗额度</span><span class="rv" id="adq">—</span></div>
+<div class="rr" id="adyr" style="display:none"><span class="rl">日均费用（元）</span><span class="rv g" id="ady">—</span></div>
+<div class="dv" id="av1" style="display:none"></div>
+<div class="rr" id="acdr" style="display:none"><span class="rl">日均调用次数</span><span class="rv b" id="acd">—</span></div>
+<div class="rr" id="apcr" style="display:none"><span class="rl">每次平均消耗额度</span><span class="rv p" id="apc2">—</span></div>
+<div class="dv" id="av2" style="display:none"></div>
+<div class="rr" id="ardr" style="display:none"><span class="rl">剩余可用天数</span><span class="rv y" id="ard">—</span></div>
+<div class="rr" id="artr" style="display:none"><span class="rl">预计用到</span><span class="rv" id="art">—</span></div>
+</div>
+</div></div>
+<button class="rb" onclick="c_ra()">↻ 清空全部</button>
+</div>
+</section>
+<script>
+function switchPage(name){
+  var names=['personal','relay','convert'];
+  for(var i=0;i<names.length;i++){
+    document.getElementById('page-'+names[i]).hidden = names[i]!==name;
+    document.getElementById('tab-'+names[i]).classList.toggle('active', names[i]===name);
+  }
+  try{history.replaceState(null,'','#'+name)}catch(e){}
+  window.scrollTo(0,0);
+}
+(function(){
+  var h=(location.hash||'').replace('#','');
+  if(h==='relay'||h==='convert'||h==='personal'){
+    document.addEventListener('DOMContentLoaded',function(){switchPage(h)});
+  }
+})();
+
+var supabaseUrl = '';
+var supabaseKey = '';
+var allItems = [];
+var currentRange = 'month';
+var selectedMonth = '';
+var availableMonths = [];
+var currentCategory = '';
+var currentSearch = '';
+var entryType = 'expense';
+var bridgeAttempts = 0;
+
+var ranges = [
+  { key: 'today', label: '今日' },
+  { key: '7d', label: '7天' },
+  { key: 'month', label: '本月' },
+  { key: '3m', label: '3月' },
+  { key: '6m', label: '半年' },
+  { key: '12m', label: '1年' },
+  { key: 'all', label: '全部' }
+];
+
+var expenseCategories = ['吃饭', '奶茶咖啡', '交通', '日用', '娱乐', '电费话费', '购物', '医疗', '其他'];
+var incomeCategories = ['工资', '转账', '其他'];
+var categoryColors = ['#6E4F9A', '#9B7FCC', '#D4A85F', '#5BA67D', '#C45B5B', '#7C8FAE', '#C87E6B', '#77A8A1', '#B6A36E'];
+
+function hasBridgeConfig() {
+  return typeof Bridge !== 'undefined' && (
+    typeof Bridge.getConfig === 'function' ||
+    typeof Bridge.getPluginConfig === 'function'
+  );
+}
+
+function readBridgeConfig() {
+  if (typeof Bridge.getConfig === 'function') return Bridge.getConfig();
+  if (typeof Bridge.getPluginConfig === 'function') return Bridge.getPluginConfig();
+  return null;
+}
+
+function getLocalCfg() {
+  try {
+    var u = localStorage.getItem('muse_ledger_supabase_url') || '';
+    var k = localStorage.getItem('muse_ledger_supabase_key') || '';
+    if (u && k) return { supabase_url: u, supabase_key: k };
+  } catch (e) {}
+  return null;
+}
+
+function p_showCfgModal() {
+  try {
+    document.getElementById('cfgUrl').value = supabaseUrl || localStorage.getItem('muse_ledger_supabase_url') || '';
+    document.getElementById('cfgKey').value = supabaseKey || localStorage.getItem('muse_ledger_supabase_key') || '';
+  } catch (e) {}
+  document.getElementById('cfgModal').classList.add('show');
+}
+
+function p_hideCfgModal(e) {
+  if (e && e.target && e.target.id !== 'cfgModal') return;
+  document.getElementById('cfgModal').classList.remove('show');
+}
+
+function p_saveCfgLocal() {
+  var u = (document.getElementById('cfgUrl').value || '').trim().replace(/\/+$/, '');
+  var k = (document.getElementById('cfgKey').value || '').trim();
+  if (!u || !k) {
+    showToast('请完整填写 URL 和 Key');
+    return;
+  }
+  try {
+    localStorage.setItem('muse_ledger_supabase_url', u);
+    localStorage.setItem('muse_ledger_supabase_key', k);
+  } catch (e) {}
+  p_hideCfgModal();
+  applyConfig({ supabase_url: u, supabase_key: k });
+  showToast('配置已保存在本地');
+}
+
+function p_waitForBridge() {
+  if (hasBridgeConfig()) {
+    init();
+    return;
+  }
+  var localCfg = getLocalCfg();
+  if (localCfg) {
+    renderRangeBar();
+    renderMonthSelect();
+    renderCategoryBar();
+    setEntryType('expense');
+    applyConfig(localCfg);
+    return;
+  }
+  bridgeAttempts++;
+  if (bridgeAttempts < 10) {
+    setTimeout(p_waitForBridge, 40);
+  } else {
+    renderRangeBar();
+    renderMonthSelect();
+    renderCategoryBar();
+    setEntryType('expense');
+    setStatus('err', '未配置');
+    renderError('请点击右上角「⚙️ 配置」填写 Supabase URL 和 Key（仅保存在本机浏览器）');
+    p_showCfgModal();
+  }
+}
+
+function init() {
+  renderRangeBar();
+  renderMonthSelect();
+  renderCategoryBar();
+  setEntryType('expense');
+  try {
+    var maybeConfig = readBridgeConfig();
+    if (maybeConfig && typeof maybeConfig.then === 'function') {
+      maybeConfig.then(applyConfig).catch(function(e) {
+        setStatus('err', '配置错误');
+        renderError(e.message || '配置错误');
+      });
+    } else {
+      applyConfig(maybeConfig);
+    }
+  } catch (e) {
+    setStatus('err', '配置错误');
+    renderError(e.message || '配置错误');
+  }
+}
+
+
+function applyConfig(raw) {
+  var cfg = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+  supabaseUrl = (cfg.supabase_url || '').replace(/\/+$/, '');
+  supabaseKey = cfg.supabase_key || '';
+  if (!supabaseUrl || !supabaseKey) {
+    setStatus('err', '未配置');
+    renderError('请先配置 Supabase URL 和 Anon Key');
+    return;
+  }
+  loadItems();
+}
+
+function setStatus(kind, text) {
+  var el = document.getElementById('statusText');
+  el.className = 'status ' + (kind || '');
+  el.textContent = text;
+}
+
+function p_sbFetch(table, method, data, query) {
+  var url = supabaseUrl + '/rest/v1/' + table + (query || '');
+  var headers = {
+    'apikey': supabaseKey,
+    'Authorization': 'Bearer ' + supabaseKey,
+    'Content-Type': 'application/json'
+  };
+  if (method === 'POST' || method === 'PATCH' || method === 'DELETE') {
+    headers['Prefer'] = 'return=representation';
+  }
+  var opts = { method: method, headers: headers };
+  if (data) opts.body = JSON.stringify(data);
+  return fetch(url, opts).then(function(r) {
+    return r.text().then(function(text) {
+      if (!r.ok) throw new Error(text || String(r.status));
+      return text ? JSON.parse(text) : null;
+    });
+  });
+}
+
+function monthKeyFromDate(d) {
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1);
+}
+function formatMonthLabel(key) {
+  var parts = String(key || '').split('-');
+  if (parts.length !== 2) return key;
+  var m = parseInt(parts[1], 10);
+  return parts[0] + '年' + (isNaN(m) ? parts[1] : m) + '月';
+}
+function parseMonthKey(key) {
+  var parts = String(key || '').split('-');
+  if (parts.length !== 2) return null;
+  var y = parseInt(parts[0], 10);
+  var m = parseInt(parts[1], 10);
+  if (!y || !m || m < 1 || m > 12) return null;
+  return { year: y, month: m };
+}
+function getSpecificMonthStart() {
+  var p = parseMonthKey(selectedMonth);
+  if (!p) return null;
+  return new Date(p.year, p.month - 1, 1);
+}
+function getSpecificMonthEnd() {
+  var p = parseMonthKey(selectedMonth);
+  if (!p) return null;
+  return new Date(p.year, p.month, 1);
+}
+function daysInSpecificMonth() {
+  var p = parseMonthKey(selectedMonth);
+  if (!p) return 0;
+  return new Date(p.year, p.month, 0).getDate();
+}
+function renderMonthSelect() {
+  var sel = document.getElementById('monthSelect');
+  if (!sel) return;
+  var html = '<option value="">按上方范围查看</option>';
+  if (!availableMonths.length) {
+    html += '<option value="" disabled>暂无有记录的月份</option>';
+  } else {
+    for (var i = 0; i < availableMonths.length; i++) {
+      var k = availableMonths[i];
+      html += '<option value="' + escAttr(k) + '"' + (k === selectedMonth ? ' selected' : '') + '>' + esc(formatMonthLabel(k)) + '（' + esc(k) + '）</option>';
+    }
+  }
+  sel.innerHTML = html;
+  sel.value = selectedMonth || '';
+  sel.classList.toggle('active', !!selectedMonth);
+  var clearBtn = document.getElementById('monthClearBtn');
+  if (clearBtn) clearBtn.hidden = !selectedMonth;
+}
+function loadAvailableMonths() {
+  if (!supabaseUrl || !supabaseKey) { availableMonths = []; renderMonthSelect(); return Promise.resolve(); }
+  var pageSize = 1000, offset = 0, seen = {};
+  function fetchPage() {
+    return p_sbFetch('expenses', 'GET', null, '?select=created_at&order=created_at.desc&limit=' + pageSize + '&offset=' + offset).then(function(rows) {
+      rows = rows || [];
+      for (var i = 0; i < rows.length; i++) {
+        if (!rows[i] || !rows[i].created_at) continue;
+        var d = new Date(rows[i].created_at);
+        if (isNaN(d.getTime())) continue;
+        seen[monthKeyFromDate(d)] = true;
+      }
+      if (rows.length === pageSize) { offset += pageSize; return fetchPage(); }
+      return Object.keys(seen);
+    });
+  }
+  return fetchPage().then(function(keys) {
+    // Also include months from currently loaded items as a fallback
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i] && allItems[i].created_at) {
+        var dd = new Date(allItems[i].created_at);
+        if (!isNaN(dd.getTime())) seen[monthKeyFromDate(dd)] = true;
+      }
+    }
+    availableMonths = Object.keys(seen).sort().reverse();
+    // If the selected month no longer exists in DB, keep it selectable so the view stays consistent
+    if (selectedMonth && availableMonths.indexOf(selectedMonth) < 0) {
+      availableMonths.push(selectedMonth);
+      availableMonths.sort().reverse();
+    }
+    renderMonthSelect();
+  }).catch(function() {
+    // If the lightweight query fails, derive months from loaded items instead of breaking the page
+    var fallback = {};
+    for (var i = 0; i < allItems.length; i++) {
+      if (allItems[i] && allItems[i].created_at) {
+        var dd2 = new Date(allItems[i].created_at);
+        if (!isNaN(dd2.getTime())) fallback[monthKeyFromDate(dd2)] = true;
+      }
+    }
+    availableMonths = Object.keys(fallback).sort().reverse();
+    renderMonthSelect();
+  });
+}
+function setSpecificMonth(value) {
+  selectedMonth = value || '';
+  currentCategory = '';
+  renderMonthSelect();
+  renderRangeBar();
+  loadItems();
+}
+function clearSpecificMonth() {
+  if (!selectedMonth) return;
+  selectedMonth = '';
+  renderMonthSelect();
+  renderRangeBar();
+  loadItems();
+}
+function getRangeStart(key) {
+  if (selectedMonth) return getSpecificMonthStart();
+  var now = new Date();
+  if (key === 'today') return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (key === '7d') return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+  if (key === '3m') return new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  if (key === '6m') return new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  if (key === '12m') return new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  if (key === 'all') return null;
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+function getRangeEnd() {
+  if (selectedMonth) return getSpecificMonthEnd();
+  return null;
+}
+
+function loadItems() {
+  setStatus('', '连接中');
+  document.getElementById('billList').innerHTML = '<div class="loading">加载中...</div>';
+  var start = getRangeStart(currentRange);
+  var end = getRangeEnd();
+  var base;
+  if (selectedMonth && start && end) {
+    base = '?and=(created_at.gte.' + encodeURIComponent(start.toISOString()) + ',created_at.lt.' + encodeURIComponent(end.toISOString()) + ')&order=created_at.desc';
+  } else {
+    base = start ? '?created_at=gte.' + encodeURIComponent(start.toISOString()) + '&order=created_at.desc' : '?order=created_at.desc';
+  }
+  var pageSize = 1000, offset = 0, acc = [];
+  function fetchPage() {
+    return p_sbFetch('expenses', 'GET', null, base + '&limit=' + pageSize + '&offset=' + offset).then(function(items) {
+      items = items || [];
+      acc = acc.concat(items);
+      if (items.length === pageSize) { offset += pageSize; return fetchPage(); }
+      return acc;
+    });
+  }
+  fetchPage()
+    .then(function(items) {
+      var loaded = items || [];
+      if (selectedMonth) {
+        loaded = loaded.filter(function(it) {
+          if (!it || !it.created_at) return false;
+          var d = new Date(it.created_at);
+          return !isNaN(d.getTime()) && monthKeyFromDate(d) === selectedMonth;
+        });
+      }
+      allItems = loaded;
+      setStatus('ok', '已连接');
+      renderAll();
+      loadAvailableMonths();
+    })
+    .catch(function(e) {
+      setStatus('err', '连接失败');
+      renderError(errorMessage(e));
+    });
+}
+
+function errorMessage(e) {
+  var msg = e && e.message ? e.message : String(e || '加载失败');
+  if (msg.indexOf('type') >= 0 || msg.indexOf('schema cache') >= 0 || msg.indexOf('column') >= 0) {
+    return '请先执行 supabase_schema.sql，为 expenses 表增加 type 字段。';
+  }
+  return msg;
+}
+
+function renderError(message) {
+  document.getElementById('billList').innerHTML = '<div class="empty">' + esc(message) + '</div>';
+  renderRing([]);
+  renderLegend([]);
+  renderTrend([]);
+  updateSummary([]);
+}
+
+function renderAll() {
+  var filtered = getFilteredItems();
+  updateSummary(filtered);
+  renderMonthlySummary(filtered);
+  renderCategoryBar();
+  renderRing(filtered);
+  renderLegend(filtered);
+  renderTrend(filtered);
+  renderList(filtered);
+}
+
+function getFilteredItems() {
+  var keyword = currentSearch.trim().toLowerCase();
+  return allItems.filter(function(item) {
+    if (currentCategory && (item.category || '其他') !== currentCategory) return false;
+    if (!keyword) return true;
+    var typeLabel = normalizeType(item.type) === 'income' ? '收入 income' : '支出 expense';
+    var haystack = [
+      item.category || '其他',
+      item.note || '',
+      typeLabel,
+      String(item.amount || ''),
+      fmtTime(item.created_at)
+    ].join(' ').toLowerCase();
+    return haystack.indexOf(keyword) >= 0;
+  });
+}
+
+function normalizeType(type) {
+  return type === 'income' ? 'income' : 'expense';
+}
+
+function signedAmount(item) {
+  var amount = Number(item.amount) || 0;
+  return normalizeType(item.type) === 'income' ? amount : -amount;
+}
+
+function updateSummary(items) {
+  var income = 0;
+  var expense = 0;
+  for (var i = 0; i < items.length; i++) {
+    if (normalizeType(items[i].type) === 'income') income += Number(items[i].amount) || 0;
+    else expense += Number(items[i].amount) || 0;
+  }
+  var balance = income - expense;
+  document.getElementById('incomeTotal').textContent = moneyShort(income);
+  document.getElementById('expenseTotal').textContent = moneyShort(expense);
+  document.getElementById('balanceTotal').textContent = moneyShort(balance);
+  document.getElementById('balanceTotal').style.color = balance >= 0 ? 'var(--success)' : 'var(--danger)';
+  document.getElementById('billCount').textContent = items.length + ' 笔';
+  document.getElementById('insightCount').textContent = items.length + ' 笔';
+  document.getElementById('avgDailyExpense').textContent = money(expense / rangeDayCount());
+  document.getElementById('maxExpense').textContent = money(maxExpense(items));
+}
+
+function renderRangeBar() {
+  var html = '';
+  for (var i = 0; i < ranges.length; i++) {
+    var r = ranges[i];
+    var isActive = !selectedMonth && r.key === currentRange;
+    html += '<button class="seg-btn' + (isActive ? ' active' : '') +
+      '" type="button" onclick="setRange(\'' + r.key + '\')">' + r.label + '</button>';
+  }
+  document.getElementById('rangeBar').innerHTML = html;
+}
+
+function setRange(key) {
+  currentRange = key;
+  selectedMonth = '';
+  currentCategory = '';
+  renderMonthSelect();
+  renderRangeBar();
+  loadItems();
+}
+
+function renderCategoryBar() {
+  var used = {};
+  for (var i = 0; i < allItems.length; i++) {
+    used[allItems[i].category || '其他'] = true;
+  }
+  var cats = expenseCategories.concat(incomeCategories.filter(function(c) { return expenseCategories.indexOf(c) < 0; }));
+  Object.keys(used).forEach(function(c) {
+    if (cats.indexOf(c) < 0) cats.push(c);
+  });
+
+  var html = '<button class="tag-btn' + (currentCategory === '' ? ' active' : '') +
+    '" type="button" data-category="" onclick="setCategory(this.dataset.category)">全部</button>';
+  for (var j = 0; j < cats.length; j++) {
+    var cat = cats[j];
+    html += '<button class="tag-btn' + (currentCategory === cat ? ' active' : '') +
+      '" type="button" data-category="' + escAttr(cat) + '" onclick="setCategory(this.dataset.category)">' + esc(cat) + '</button>';
+  }
+  document.getElementById('categoryBar').innerHTML = html;
+}
+
+function setCategory(cat) {
+  currentCategory = cat;
+  renderAll();
+}
+
+function setSearch(value) {
+  currentSearch = value || '';
+  renderAll();
+}
+
+function clearSearch() {
+  currentSearch = '';
+  document.getElementById('searchInput').value = '';
+  renderAll();
+}
+
+function renderRing(items) {
+  var svg = document.getElementById('ringChart');
+  var data = categoryTotals(items, 'expense').slice(0, 8);
+  var total = data.reduce(function(sum, d) { return sum + d.amount; }, 0);
+  if (!total) {
+    svg.innerHTML = '<circle cx="100" cy="100" r="70" fill="none" stroke="#E8E6EE" stroke-width="18"></circle>' +
+      '<text x="100" y="96" font-size="28">0%</text><text class="sub" x="100" y="118">暂无支出</text>';
+    return;
+  }
+  var radius = 70;
+  var circ = 2 * Math.PI * radius;
+  var offset = 0;
+  var html = '<circle cx="100" cy="100" r="' + radius + '" fill="none" stroke="#E8E6EE" stroke-width="18"></circle>';
+  for (var i = 0; i < data.length; i++) {
+    var len = data[i].amount / total * circ;
+    html += '<circle cx="100" cy="100" r="' + radius + '" fill="none" stroke="' + categoryColors[i % categoryColors.length] +
+      '" stroke-width="18" stroke-linecap="round" stroke-dasharray="' + len + ' ' + (circ - len) +
+      '" stroke-dashoffset="' + (-offset) + '" transform="rotate(-90 100 100)"></circle>';
+    offset += len;
+  }
+  html += '<text x="100" y="94" font-size="30">' + Math.round(data[0].amount / total * 100) + '%</text>' +
+    '<text class="sub" x="100" y="118">' + esc(data[0].category) + '</text>';
+  svg.innerHTML = html;
+}
+
+function renderLegend(items) {
+  var data = categoryTotals(items, 'expense').slice(0, 8);
+  if (!data.length) {
+    document.getElementById('categoryLegend').innerHTML = '<div class="empty" style="padding:18px 0;text-align:left;">暂无分类数据</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < data.length; i++) {
+    html += '<div class="legend-item">' +
+      '<span class="dot" style="background:' + categoryColors[i % categoryColors.length] + '"></span>' +
+      '<span class="legend-name">' + esc(data[i].category) + '</span>' +
+      '<span class="legend-amount">' + money(data[i].amount) + '</span></div>';
+  }
+  document.getElementById('categoryLegend').innerHTML = html;
+}
+
+function categoryTotals(items, type) {
+  var map = {};
+  for (var i = 0; i < items.length; i++) {
+    if (type && normalizeType(items[i].type) !== type) continue;
+    var cat = items[i].category || '其他';
+    map[cat] = (map[cat] || 0) + (Number(items[i].amount) || 0);
+  }
+  return Object.keys(map).map(function(cat) {
+    return { category: cat, amount: map[cat] };
+  }).sort(function(a, b) { return b.amount - a.amount; });
+}
+
+function renderTrend(items) {
+  var days = trendDays();
+  var map = {};
+  for (var i = 0; i < days.length; i++) {
+    map[days[i].key] = { income: 0, expense: 0 };
+  }
+  for (var j = 0; j < items.length; j++) {
+    var d = new Date(items[j].created_at);
+    var key = dateKey(d);
+    if (!map[key]) continue;
+    map[key][normalizeType(items[j].type)] += Number(items[j].amount) || 0;
+  }
+  var max = 0;
+  days.forEach(function(day) {
+    var val = map[day.key];
+    max = Math.max(max, val.income + val.expense);
+  });
+  if (!max) max = 1;
+  var html = '';
+  for (var k = 0; k < days.length; k++) {
+    var val = map[days[k].key];
+    var expenseH = Math.max(2, Math.round(val.expense / max * 100));
+    var incomeH = Math.max(2, Math.round(val.income / max * 100));
+    html += '<div class="bar-day" title="' + esc(days[k].label) + ' 收入 ' + money(val.income) + ' 支出 ' + money(val.expense) + '">' +
+      '<div class="bar-track">' +
+      '<div class="bar-expense" style="height:' + (val.expense ? expenseH : 0) + '%"></div>' +
+      '<div class="bar-income" style="height:' + (val.income ? incomeH : 0) + '%; bottom:' + (val.expense ? expenseH + 1 : 0) + '%"></div>' +
+      '</div><div class="bar-label">' + esc(days[k].short) + '</div></div>';
+  }
+  document.getElementById('trendBars').innerHTML = html;
+}
+
+function trendDays() {
+  if (selectedMonth) {
+    var p = parseMonthKey(selectedMonth);
+    if (p) {
+      var totalDays = new Date(p.year, p.month, 0).getDate();
+      var daysSpecific = [];
+      for (var di = 1; di <= totalDays; di++) {
+        var cur = new Date(p.year, p.month - 1, di);
+        daysSpecific.push({
+          key: dateKey(cur),
+          label: (cur.getMonth() + 1) + '/' + cur.getDate(),
+          short: cur.getDate() === 1 ? (cur.getMonth() + 1) + '/1' : String(cur.getDate())
+        });
+      }
+      return daysSpecific;
+    }
+  }
+  var start = getRangeStart(currentRange);
+  var end = new Date();
+  var earliest = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 91);
+  if (!start || start < earliest) start = earliest;
+  var days = [];
+  var cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  while (cursor <= end && days.length < 92) {
+    days.push({
+      key: dateKey(cursor),
+      label: (cursor.getMonth() + 1) + '/' + cursor.getDate(),
+      short: cursor.getDate() === 1 ? (cursor.getMonth() + 1) + '/1' : String(cursor.getDate())
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return days;
+}
+
+function renderList(items) {
+  if (!items.length) {
+    document.getElementById('billList').innerHTML = '<div class="empty">暂无记录</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var type = normalizeType(item.type);
+    var signed = signedAmount(item);
+    html += '<article class="item">' +
+      '<div class="item-main">' +
+      '<div class="item-line"><span class="item-category">' + esc(item.category || '其他') + '</span>' +
+      '<span class="tag ' + type + '">' + (type === 'income' ? '收入' : '支出') + '</span></div>' +
+      '<div class="item-note">' + esc(item.note || '无备注') + '</div>' +
+      '<div class="item-date">' + fmtTime(item.created_at) + '</div></div>' +
+      '<div class="item-money"><span class="amount ' + type + '">' + signedMoney(signed) + '</span></div>' +
+      '</article>';
+  }
+  document.getElementById('billList').innerHTML = html;
+}
+
+function showModal() {
+  document.getElementById('modal').classList.add('show');
+  setTimeout(function() { document.getElementById('inputAmount').focus(); }, 60);
+}
+
+function hideModal(e) {
+  if (!e || e.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('show');
+  }
+}
+
+function setEntryType(type) {
+  entryType = type === 'income' ? 'income' : 'expense';
+  document.getElementById('typeExpense').classList.toggle('active', entryType === 'expense');
+  document.getElementById('typeIncome').classList.toggle('active', entryType === 'income');
+  var cats = entryType === 'income' ? incomeCategories : expenseCategories;
+  var html = '';
+  for (var i = 0; i < cats.length; i++) {
+    html += '<option value="' + escAttr(cats[i]) + '">' + esc(cats[i]) + '</option>';
+  }
+  document.getElementById('inputCategory').innerHTML = html;
+}
+
+function saveEntry() {
+  var amount = parseFloat(document.getElementById('inputAmount').value);
+  if (!amount || amount <= 0) {
+    showToast('金额要大于 0');
+    return;
+  }
+  var data = {
+    amount: Math.abs(amount),
+    category: document.getElementById('inputCategory').value,
+    note: document.getElementById('inputNote').value.trim(),
+    type: entryType
+  };
+  var dval = document.getElementById('inputDate') ? document.getElementById('inputDate').value : '';
+  if (dval) data.created_at = new Date(dval + 'T12:00:00').toISOString();
+  p_sbFetch('expenses', 'POST', data)
+    .then(function() {
+      document.getElementById('inputAmount').value = '';
+      document.getElementById('inputNote').value = '';
+      if (document.getElementById('inputDate')) document.getElementById('inputDate').value = '';
+      hideModal();
+      showToast('已记录');
+      loadItems();
+    })
+    .catch(function(e) {
+      showToast(errorMessage(e));
+    });
+}
+
+function money(n) {
+  var sign = n < 0 ? '-' : '';
+  return sign + '¥' + Math.abs(n).toFixed(2);
+}
+
+function moneyShort(n) {
+  var sign = n < 0 ? '-' : '';
+  var abs = Math.abs(n);
+  if (abs >= 1000) return sign + '¥' + Math.round(abs).toLocaleString('zh-CN');
+  return sign + '¥' + abs.toFixed(2);
+}
+
+function signedMoney(n) {
+  var sign = n >= 0 ? '+' : '-';
+  return sign + '¥' + Math.abs(n).toFixed(2);
+}
+
+function dateKey(d) {
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+
+function rangeDayCount() {
+  if (selectedMonth) {
+    var p = parseMonthKey(selectedMonth);
+    if (p) {
+      var now = new Date();
+      if (p.year === now.getFullYear() && p.month === now.getMonth() + 1) {
+        return Math.max(1, now.getDate());
+      }
+      return Math.max(1, daysInSpecificMonth());
+    }
+  }
+  var start = getRangeStart(currentRange);
+  if (!start && allItems.length) {
+    var earliest = allItems[allItems.length - 1];
+    start = new Date(earliest.created_at);
+  }
+  if (!start) return 1;
+  var end = new Date();
+  return Math.max(1, Math.floor((end - start) / 86400000) + 1);
+}
+
+function renderMonthlySummary(items) {
+  var panel = document.getElementById('monthlyPanel');
+  if (!panel) return;
+  if (selectedMonth) { panel.style.display = 'none'; return; }
+  if (currentRange !== '6m' && currentRange !== '12m' && currentRange !== 'all') { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  var map = {};
+  for (var i = 0; i < items.length; i++) {
+    var d = new Date(items[i].created_at);
+    var key = d.getFullYear() + '-' + pad(d.getMonth() + 1);
+    if (!map[key]) map[key] = { income: 0, expense: 0, count: 0 };
+    if (normalizeType(items[i].type) === 'income') map[key].income += Number(items[i].amount) || 0;
+    else map[key].expense += Number(items[i].amount) || 0;
+    map[key].count += 1;
+  }
+  var keys = Object.keys(map).sort().reverse();
+  if (!keys.length) { document.getElementById('monthlyList').innerHTML = '<div class="empty">暂无数据</div>'; return; }
+  var html = '';
+  for (var j = 0; j < keys.length; j++) {
+    var m = map[keys[j]];
+    var bal = m.income - m.expense;
+    html += '<div class="monthly-item"><div class="monthly-month">' + esc(keys[j]) + ' · ' + m.count + ' 笔</div>' +
+      '<div class="monthly-lines">' +
+      '<div class="monthly-line"><span>收入</span><span class="mv income">' + money(m.income) + '</span></div>' +
+      '<div class="monthly-line"><span>支出</span><span class="mv expense">' + money(m.expense) + '</span></div>' +
+      '<div class="monthly-line"><span>结余</span><span class="mv' + (bal < 0 ? ' neg' : '') + '">' + money(bal) + '</span></div>' +
+      '</div></div>';
+  }
+  document.getElementById('monthlyList').innerHTML = html;
+  if (selectedMonth) {
+    document.getElementById('monthlyNote').textContent = formatMonthLabel(selectedMonth) + ' · 按月汇总';
+  } else {
+    document.getElementById('monthlyNote').textContent = currentRange === 'all' ? '全部 · 按月汇总' : (currentRange === '6m' ? '半年 · 按月汇总' : '1年 · 按月汇总');
+  }
+}
+
+function maxExpense(items) {
+  var max = 0;
+  for (var i = 0; i < items.length; i++) {
+    if (normalizeType(items[i].type) !== 'expense') continue;
+    max = Math.max(max, Number(items[i].amount) || 0);
+  }
+  return max;
+}
+
+function fmtTime(ts) {
+  if (!ts) return '';
+  var d = new Date(ts);
+  return d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+function pad(n) {
+  return n < 10 ? '0' + n : String(n);
+}
+
+function showToast(text) {
+  var el = document.getElementById('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(function() { el.classList.remove('show'); }, 2200);
+}
+
+
+function esc(text) {
+  var d = document.createElement('div');
+  d.textContent = text == null ? '' : String(text);
+  return d.innerHTML;
+}
+
+function escAttr(text) {
+  return esc(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') hideModal();
+});
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', p_waitForBridge);
+else p_waitForBridge();
+
+
+function r_tg(){var s=document.getElementById('page-relay'),d=s.classList.toggle('dark');document.getElementById('rti').textContent=d?'🌙':'☀️';try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}}
+(function(){var dark=false;try{dark=localStorage.getItem('theme')==='dark'}catch(e){}if(dark){document.getElementById('page-relay').classList.add('dark');document.getElementById('rti').textContent='🌙'}})();
+
+function r_fm(n,d){if(n===null||n===undefined||isNaN(n)||!isFinite(n))return null;return parseFloat(n.toFixed(d===undefined?4:d))}
+
+// 昨天的日期字符串（YYYY-MM-DD），和 main.js 里 todayStr(-1) 用的是同一套算法，
+// 保证前端筛选"昨日"记录时和写入流水时用的日期基准一致。
+function ydStr(){
+  var d=new Date();
+  d.setDate(d.getDate()-1);
+  var y=d.getFullYear();
+  var m=String(d.getMonth()+1).padStart(2,'0');
+  var day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+
+async function r_sbFetch(url,key,path,opts){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),12000);
+  let res;
+  try{
+    res=await fetch(url.replace(/\/$/,'')+path,Object.assign({headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json'},cache:'no-store',signal:controller.signal},opts||{}));
+  }catch(e){
+    if(e.name==='AbortError') throw new Error('请求超时（12秒未返回），请检查网络或稍后重试');
+    throw e;
+  }finally{ clearTimeout(timer) }
+  if(!res.ok) throw new Error('请求失败: '+res.status);
+  return res.json();
+}
+async function r_sbRpc(url,key,fn,args){
+  return r_sbFetch(url,key,`/rest/v1/rpc/${fn}`,{method:'POST',body:JSON.stringify(args||{})});
+}
+
+// 折中单价计算，优先读正式字段，只有正式字段为空时才退回解析备注：
+// 1) 正式字段（第一优先）：正常单价 = normal_recharge_amount / normal_received_quota；
+//    实际单价 = recharge_amount / received_quota（实际充值那一笔）；
+//    折中单价直接用 effective_price_per_quota（数据库已按
+//    「正常价与实际价取平均、只有一种价就用它」算好），折合人民币也用它算。
+// 2) 正式字段缺失时的旧兼容字段：normal_quota_per_yuan / normal_unit_price。
+// 3) 以上都没有时，才退回原来解析备注的方法：读备注里「正常1:200」这类字样，
+//    折中单价 =(正常单价+实际单价)/2，折中折扣 = 折中单价/正常单价。
+// 备注写了未充值时，存的那对充值数本身就是正常价占位（如哈基米 1/200），不算实际充值，
+// 纯正常价不产生任何折扣（如肘子未充值就是1元，哈基米就是1/200元）。
+function r_priceInfo(s){
+  const hasNum=function(v){return v!==null&&v!==undefined&&v!==''&&Number(v)>0;};
+  let normalUnit=null, actualUnit=null, effectiveUnit=null;
+  // —— 第一优先：正式字段 ——
+  if(hasNum(s.normal_recharge_amount)&&hasNum(s.normal_received_quota)) normalUnit=Number(s.normal_recharge_amount)/Number(s.normal_received_quota);
+  if(hasNum(s.recharge_amount)&&hasNum(s.received_quota)) actualUnit=Number(s.recharge_amount)/Number(s.received_quota);
+  if(hasNum(s.effective_price_per_quota)) effectiveUnit=Number(s.effective_price_per_quota);
+  // —— 第二优先：旧兼容字段（仅当正式字段没给出正常价时） ——
+  if(normalUnit===null){
+    if(hasNum(s.normal_quota_per_yuan)) normalUnit=1/Number(s.normal_quota_per_yuan);
+    else if(hasNum(s.normal_unit_price)) normalUnit=Number(s.normal_unit_price);
+  }
+  const note=s.note||'';
+  // —— 第三优先：解析备注（仅当正式/兼容字段都没给出正常价时才用，解析逻辑保留不删） ——
+  if(normalUnit===null&&note){
+    const m=note.match(/正常\s*(?:价格|比例|价)?\s*1\s*(?:元)?\s*[:：=]\s*([0-9]+(?:\.[0-9]+)?)/);
+    if(m&&parseFloat(m[1])>0) normalUnit=1/parseFloat(m[1]);
+    else{const m2=note.match(/正常单价\s*(?:为|是)?\s*([0-9]+(?:\.[0-9]+)?)\s*元/);if(m2) normalUnit=parseFloat(m2[1]);}
+  }
+  if(/未充值|没充过|未充过|没充|一分钱没充/.test(note)){ if(normalUnit===null) normalUnit=actualUnit; actualUnit=null; }
+  // 折中单价：有 effective_price_per_quota 就直接用它；没有才按 (正常+实际)/2 或单一价格算。
+  let blendedUnit=null,discount=null;const hasBoth=normalUnit!==null&&actualUnit!==null;
+  if(effectiveUnit!==null){blendedUnit=effectiveUnit;if(normalUnit!==null) discount=blendedUnit/normalUnit;}
+  else if(hasBoth){blendedUnit=(normalUnit+actualUnit)/2;discount=blendedUnit/normalUnit;}
+  else if(normalUnit!==null) blendedUnit=normalUnit;
+  else if(actualUnit!==null) blendedUnit=actualUnit;
+  return {normalUnit,actualUnit,blendedUnit,discount,hasBoth};
+}
+
+function estimateRemainingDays(station,txs){
+  if(!txs||!txs.length) return null;
+  const total=txs.reduce((s,t)=>s+(t.consumed_quota||0),0);
+  const days=new Set(txs.map(t=>t.record_date)).size||1;
+  const dailyAvg=total/days;
+  return dailyAvg>0 ? (station.current_balance||0)/dailyAvg : null;
+}
+
+// 单模型推算：只用「当前余额 + 这个模型自己的历史流水 + 这个模型的定价」现算，
+// 纯前端计算，不写回 Supabase，也不新增任何表。
+function estimatePerModel(model, station, txs){
+  const bal = station.current_balance || 0;
+  const modelTxs = (txs||[]).filter(t => t.model_name === model.model_name);
+  let remainingCalls = null, remainingDays = null;
+  if (model.pricing_type === 'per_call' && model.per_call_price > 0) {
+    remainingCalls = bal / model.per_call_price;
+  }
+  if (modelTxs.length) {
+    const totalQuota = modelTxs.reduce((s,t)=>s+(t.consumed_quota||0),0);
+    const totalCalls = modelTxs.reduce((s,t)=>s+(t.call_count||0),0);
+    const activeDays = new Set(modelTxs.map(t=>t.record_date)).size || 1;
+    const dailyAvg = totalQuota/activeDays;
+    if (dailyAvg>0) remainingDays = bal/dailyAvg;
+    if (remainingCalls===null && totalCalls>0 && totalQuota>0) {
+      remainingCalls = bal / (totalQuota/totalCalls);
+    }
+  }
+  return { remainingCalls, remainingDays, hasHistory: modelTxs.length>0 };
+}
+
+// ===== 总余额卡天数列表折叠 + 站点卡片排序（仅页面内状态，不保存到服务器/本地） =====
+var r_daysCollapsed=false;
+var r_sortKey='balance';
+var r_sortDir=-1; // -1 = 从大到小（逆序），1 = 从小到大（正序）
+var r_cachedViews=null;
+var r_cachedMeta=null;
+var R_SORT_DEFS=[
+  {key:'balance', label:'余额', defDir:-1},
+  {key:'rmb', label:'折合人民币', defDir:-1},
+  {key:'checkin', label:'今日签到', defDir:-1},
+  {key:'consumed', label:'昨日消耗', defDir:-1},
+  {key:'name', label:'站名', defDir:1},
+  {key:'days', label:'剩余天数', defDir:1}
+];
+// ===== 最近流水显示天数设置（默认3天，保存在浏览器本地 localStorage） =====
+var R_TX_DAYS_KEY='hsb_recent_tx_days';
+var r_txDays=(function(){
+  var v=3;
+  try{ v=parseInt(localStorage.getItem(R_TX_DAYS_KEY),10); }catch(e){}
+  if(!v||isNaN(v)||v<1) v=3;
+  if(v>3650) v=3650;
+  return v;
+})();
+var r_txDaysDraft=null;
+function r_txCutoffStr(days){
+  var d=new Date();
+  d.setDate(d.getDate()-(days-1));
+  var y=d.getFullYear();
+  var m=String(d.getMonth()+1).padStart(2,'0');
+  var day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function r_recentTxs(txs){
+  var cutoff=r_txCutoffStr(r_txDays);
+  return (txs||[]).filter(function(t){ return (t.record_date||'')>=cutoff; });
+}
+function r_openTxDays(ev){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  r_txDaysDraft=r_txDays;
+  var inp=document.getElementById('rtxCustom');
+  if(inp) inp.value=[3,7,14,30].indexOf(r_txDays)>=0?'':String(r_txDays);
+  document.getElementById('rtxMsg').textContent='';
+  r_paintTxPresets();
+  document.getElementById('rtxModal').style.display='flex';
+}
+function r_closeTxDays(){
+  document.getElementById('rtxModal').style.display='none';
+}
+function r_paintTxPresets(){
+  var btns=document.querySelectorAll('#rtxModal .txpreset');
+  for(var i=0;i<btns.length;i++){
+    btns[i].classList.toggle('active', parseInt(btns[i].getAttribute('data-days'),10)===r_txDaysDraft);
+  }
+}
+function r_pickTxDays(n){
+  if(n!==null&&n!==undefined){
+    r_txDaysDraft=n;
+    var inp=document.getElementById('rtxCustom');
+    if(inp) inp.value='';
+  }else{
+    var v=parseInt((document.getElementById('rtxCustom').value||''),10);
+    r_txDaysDraft=(v&&v>=1)?v:null;
+  }
+  document.getElementById('rtxMsg').textContent='';
+  r_paintTxPresets();
+}
+function r_saveTxDays(){
+  var v=r_txDaysDraft;
+  if(v===null||v===undefined){
+    v=parseInt((document.getElementById('rtxCustom').value||''),10);
+  }
+  if(!v||isNaN(v)||v<1||v>3650){
+    document.getElementById('rtxMsg').textContent='请输入 1 到 3650 之间的天数';
+    return;
+  }
+  r_txDays=Math.floor(v);
+  try{ localStorage.setItem(R_TX_DAYS_KEY,String(r_txDays)); }catch(e){}
+  r_closeTxDays();
+  r_paint();
+}
+function r_cardHtml(v){
+  var s=v.station, price=v.price, ratio=v.ratio, rmb=v.rmb, days=v.days;
+  var models=v.models, modelNames=v.modelNames, mdRows=v.mdRows;
+  var recentTxs=r_recentTxs(v.txs);
+  var txRows = recentTxs.length
+    ? recentTxs.map(function(t){
+        var label=[t.model_name,t.note].filter(Boolean).join(' · ');
+        return '<div class="txrow">' +
+          '<span class="txd">' + r_escapeHtml((t.record_date||'').slice(5)) + '</span>' +
+          '<span class="txm">' + (label? r_escapeHtml(label) : '') + '</span>' +
+          '<span class="txq">-' + r_fm(t.consumed_quota,2) + '</span>' +
+        '</div>';
+      }).join('')
+    : '<div class="txempty">' + (v.txs.length? '最近 '+r_txDays+' 天暂无消费记录' : '暂无消费记录') + '</div>';
+  return '<div class="card">' +
+    '<div class="chead"><span class="cname">' + r_escapeHtml(s.name) + '</span><span class="badge">' + (ratio? (price.hasBoth?'折中 1元=':'1元=')+r_fm(ratio,2)+'额度':'未设置比例') + '</span><span class="cbal"><b>' + r_fm(s.current_balance,2) + '</b> 额度' + (rmb!==null? ' · <span class="cg">¥'+r_fm(rmb,2)+'</span>' : ' · ¥—') + '</span></div>' +
+    '<div class="cmeta"><span>昨日消耗 <b class="warn">' + r_fm(v.ydConsumedQuota,2) + '</b></span><span>今日签到 <b class="g">+' + r_fm(v.checkin,2) + '</b></span><span>预计可用 <b class="' + (days===null?'':(days<3?'warn':days<10?'y':'g')) + '">' + (days!==null? r_fm(days,1)+' 天' : '暂无记录') + '</b></span>' + (models.length? '<span>模型 '+models.length+' 个</span>':'') + '</div>' +
+    (modelNames? '<div class="csub">模型：' + r_escapeHtml(modelNames) + '</div>':'') +
+    (price.hasBoth? '<div class="csub">正常 ' + r_fm(price.normalUnit,4) + ' · 实际 ' + r_fm(price.actualUnit,4) + ' · 折中 ' + r_fm(price.blendedUnit,4) + ' 元/额度 · ' + r_fm(price.discount*10,2) + ' 折</div>' : (price.blendedUnit? '<div class="csub">折中单价 ' + r_fm(price.blendedUnit,4) + ' 元/额度</div>' : '')) +
+    ((s.recharge_amount!=null||s.received_quota!=null)? '<div class="csub">充值 ¥' + (s.recharge_amount!=null?r_fm(s.recharge_amount,2):'—') + ' → ' + (s.received_quota!=null?r_fm(s.received_quota,2):'—') + ' 额度</div>':'') +
+    (s.note? '<div class="csub">备注：' + r_escapeHtml(s.note) + '</div>':'') +
+    '<details class="txw"><summary>模型定价' + (models.length? '（'+models.length+'）':'') + '</summary>' +
+      '<div class="txlist">' + mdRows + '</div>' +
+    '</details>' +
+    '<details class="txw"><summary><span>最近流水' + (recentTxs.length? '（'+recentTxs.length+'）':'') + '</span><span class="txright"><span class="txdays">近' + r_txDays + '天</span></span></summary>' +
+      '<div class="txlist">' + txRows + '</div>' +
+    '</details>' +
+  '</div>';
+}
+function todayStr(){
+  var d=new Date();
+  var y=d.getFullYear();
+  var m=String(d.getMonth()+1).padStart(2,'0');
+  var day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+// 今日签到额度：优先取增长流水里备注标了「签到」的；没有标注时，
+// 退回取今天的正向增长（排除备注写明充值/购买/兑换/邀请的），不编造数据。
+function r_todayCheckinQuota(blog,today){
+  var list=(blog||[]).filter(function(b){return b.record_date===today});
+  if(!list.length) return 0;
+  var labelled=list.filter(function(b){return /签到|check/i.test(String(b.note||''))});
+  var use=labelled.length?labelled:list.filter(function(b){
+    var q=Number(b.quota_amount)||0;
+    return q>0 && !/充值|购买|兑换|邀请/.test(String(b.note||''));
+  });
+  return use.reduce(function(sum,b){return sum+(Number(b.quota_amount)||0)},0);
+}
+function r_setSort(key){
+  if(r_sortKey===key){ r_sortDir*=-1; }
+  else{
+    r_sortKey=key;
+    var d=R_SORT_DEFS.find(function(x){return x.key===key});
+    r_sortDir=d?d.defDir:-1;
+  }
+  r_paint();
+}
+function r_toggleDays(){
+  r_daysCollapsed=!r_daysCollapsed;
+  r_paint();
+}
+function r_sortedViews(){
+  var arr=(r_cachedViews||[]).slice();
+  var dir=r_sortDir;
+  function val(v){
+    switch(r_sortKey){
+      case 'rmb': return v.rmb;
+      case 'checkin': return v.checkin;
+      case 'consumed': return v.consumed;
+      // 没有可用天数数据时，按余额近似（折合人民币优先，没有就用额度余额）
+      case 'days': return (v.days!==null&&v.days!==undefined)? v.days : ((v.rmb!==null&&v.rmb!==undefined)? v.rmb : v.balance);
+      default: return v.balance;
+    }
+  }
+  arr.sort(function(a,b){
+    if(r_sortKey==='name'){
+      return dir * String(a.name||'').localeCompare(String(b.name||''),'zh-Hans-CN');
+    }
+    var va=val(a), vb=val(b);
+    var na=(va===null||va===undefined||isNaN(va)), nb=(vb===null||vb===undefined||isNaN(vb));
+    if(na&&nb) return 0;
+    if(na) return 1;
+    if(nb) return -1;
+    return dir * (Number(va)-Number(vb));
+  });
+  return arr;
+}
+function r_paint(){
+  var root=document.getElementById('root');
+  if(!root||!r_cachedViews||!r_cachedMeta) return;
+  var meta=r_cachedMeta;
+  var cardsHtml=r_sortedViews().map(function(v){return r_cardHtml(v)}).join('');
+  var sortBtns=R_SORT_DEFS.map(function(d){
+    var active=d.key===r_sortKey;
+    var arrow=active?(r_sortDir<0?' ↓':' ↑'):'';
+    return '<button type="button" class="sortbtn'+(active?' active':'')+'" aria-pressed="'+active+'" onclick="r_setSort(\''+d.key+'\')">'+d.label+arrow+'</button>';
+  }).join('');
+  var curDef=R_SORT_DEFS.find(function(x){return x.key===r_sortKey})||R_SORT_DEFS[0];
+  var curText=curDef.label+(r_sortDir<0?' · 从大到小 ↓':' · 从小到大 ↑');
+  if(r_sortKey==='name') curText=curDef.label+(r_sortDir<0?' · Z→A ↓':' · A→Z ↑');
+  if(r_sortKey==='days') curText+='（无天数数据时按余额近似）';
+  root.innerHTML =
+    meta.ydRowHtml +
+    '<div class="sum">' +
+      '<div class="sl">全部站点折合总余额</div>' +
+      '<div class="sv">¥ ' + r_fm(meta.totalRMB,2) + '</div>' +
+      '<div class="ss"><span>共 ' + meta.count + ' 个站点</span></div>' +
+      '<div class="dv" style="background:rgba(255,255,255,.25);margin:14px 0 8px"></div>' +
+      '<div class="sl" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px"><span>各站剩余可用天数（从紧到松）</span>' +
+      '<button type="button" class="foldbtn" aria-expanded="' + (!r_daysCollapsed) + '" onclick="r_toggleDays()">' + (r_daysCollapsed?'展开天数列表 ▾':'收起天数列表 ▴') + '</button></div>' +
+      '<div id="rDaysList"' + (r_daysCollapsed?' hidden':'') + '>' + meta.daySummaryHtml + '</div>' +
+    '</div>' +
+    '<div class="sortbar">' +
+      '<div class="scur">当前排序：<b>' + curText + '</b><span class="shint">点选项切换，再点同一项切换正序 / 逆序</span></div>' +
+      '<div class="sortbtns">' + sortBtns + '</div>' +
+      '<div style="margin-top:8px"><button type="button" class="txglobalbtn" onclick="r_openTxDays(event)">⚙ 最近流水天数：近 ' + r_txDays + ' 天（全部站点统一）</button></div>' +
+    '</div>' +
+    '<div id="rStationList">' + cardsHtml + '</div>';
+}
+
+async function r_render(){
+  const root=document.getElementById('root');
+  try{
+    let rawCfg = null;
+    if (typeof Bridge !== 'undefined' && typeof Bridge.getPluginConfig === 'function') {
+      rawCfg = await Bridge.getPluginConfig();
+    } else if (typeof Bridge !== 'undefined' && typeof Bridge.getConfig === 'function') {
+      rawCfg = await Bridge.getConfig();
+    }
+    const cfg = (typeof rawCfg === 'string' ? JSON.parse(rawCfg) : rawCfg) || {};
+    const url = cfg.supabase_url || localStorage.getItem('hsb_supabase_url') || '';
+    const key = cfg.supabase_key || localStorage.getItem('hsb_supabase_key') || '';
+    if(!url||!key){
+      root.innerHTML='<div class="err">请点击右上角「⚙️ 配置连接」填写 Supabase URL 和 Key（仅保存在当前设备浏览器本地）</div>';
+      r_showCfgModal();
+      return;
+    }
+    // 一次 RPC 请求把所有站点 + 各自流水 + 各自定价都拿回来，
+    // 不再对每个站点单独发请求，站点多也不会因为串行请求太慢而超时/卡住
+    const stations=await r_sbRpc(url,key,'rpc_get_full_summary',{});
+    if(!stations.length){
+      root.innerHTML='<div class="empty">还没有任何站点，让 AI 帮你新增一个吧～</div>';
+      return;
+    }
+    let totalRMB=0, daySummary=[]; const views=[];
+    // 昨日四项统计：消费额度/消费金额只统计消耗（不含增长），额度增长/金额增长只统计充值等增长（不含消耗）
+    let ydConsumedQuotaSum=0, ydConsumedRMBSum=0, ydGrowthQuotaSum=0, ydGrowthRMBSum=0;
+    const yd=ydStr(); const td=todayStr();
+    for(const s of stations){
+      const txs=s.transactions||[];
+      const blog=s.balance_log||[];
+      const models=(s.models||[]).slice().sort((a,b)=>(a.model_name||'').localeCompare(b.model_name||''));
+      const price=r_priceInfo(s);
+      const ratio=price.blendedUnit?1/price.blendedUnit:null;
+      const rmb=price.blendedUnit? s.current_balance*price.blendedUnit : null;
+      if(rmb) totalRMB+=rmb;
+      // 昨日消费：只看 record_date===昨天 的消费流水，额度直接求和；金额用折中单价换算
+      // （ratio 已是折中单价对应的 1元额度数，额度/ratio 就是额度×折中单价），
+      // 没有任何价格的站点就不计入"昨日消费金额"（但仍计入"昨日消费额度"），避免硬凑数字
+      const ydTxs=txs.filter(t=>t.record_date===yd);
+      const ydConsumedQuota=ydTxs.reduce((sum,t)=>sum+(Number(t.consumed_quota)||0),0);
+      ydConsumedQuotaSum+=ydConsumedQuota;
+      const todayCheckinQuota=r_todayCheckinQuota(blog,td);
+      if(ratio && ydConsumedQuota>0) ydConsumedRMBSum+=ydConsumedQuota/ratio;
+      // 昨日增长：只看 record_date===昨天 的额度增长流水（充值/签到/邀请等），额度直接求和；
+      // 金额优先用记录自己填的 rmb_amount，没填的话用该站点的折中单价把额度换算成钱——
+      // 和"折合总余额"用的是同一套折中单价，口径统一，签到奖励也按 签到额度×折中单价 换算进来。
+      // 站点没设置比例时这部分就没法换算，只能跳过（不会瞎猜金额）
+      const ydGrowth=blog.filter(b=>b.record_date===yd);
+      ydGrowthQuotaSum+=ydGrowth.reduce((sum,b)=>sum+(Number(b.quota_amount)||0),0);
+      ydGrowthRMBSum+=ydGrowth.reduce((sum,b)=>{
+        if(b.rmb_amount!=null) return sum+(Number(b.rmb_amount)||0);
+        if(ratio) return sum+(Number(b.quota_amount)||0)/ratio;
+        return sum;
+      },0);
+      const days=estimateRemainingDays(s,txs);
+      daySummary.push({name:s.name, days});
+      const mdRows = models.length
+        ? models.map(m=>{
+            const priceText = m.pricing_type==='per_call'
+              ? (m.per_call_price!=null? r_fm(m.per_call_price,4)+' 额度/次' : '未设置价格')
+              : `入 ${m.input_price!=null? r_fm(m.input_price,4):'—'} / 出 ${m.output_price!=null? r_fm(m.output_price,4):'—'} （额度/M token）`;
+            const est = estimatePerModel(m, s, txs);
+            const bits = [];
+            if (est.remainingCalls!==null) bits.push('约 '+r_fm(est.remainingCalls,0)+' 次');
+            if (est.remainingDays!==null) bits.push(r_fm(est.remainingDays,1)+' 天');
+            const estText = bits.length ? bits.join(' · ') : (est.hasHistory? '' : '暂无该模型历史流水');
+            return `<div class="txrow" style="flex-direction:column;align-items:stretch;gap:2px">
+              <div style="display:flex;justify-content:space-between">
+                <span class="txm" style="flex:1;padding:0">${r_escapeHtml(m.model_name)}</span>
+                <span class="txq" style="color:var(--st);font-weight:600">${priceText}</span>
+              </div>
+              ${estText? `<div style="font-size:11px;color:var(--ts);text-align:right">按当前余额推算：${estText}</div>` : ''}
+            </div>`;
+          }).join('')
+        : `<div class="txempty">暂无定价信息</div>`;
+      const modelNames= models.map(m=>m.model_name).filter(Boolean).join('、');
+      views.push({
+        name:s.name||'',
+        balance:Number(s.current_balance)||0,
+        rmb:rmb,
+        checkin:todayCheckinQuota,
+        consumed:ydConsumedQuota,
+        days:days,
+        station:s,
+        price:price,
+        ratio:ratio,
+        models:models,
+        modelNames:modelNames,
+        mdRows:mdRows,
+        ydConsumedQuota:ydConsumedQuota,
+        txs:txs
+      });
+    }
+    daySummary.sort((a,b)=>{
+      if(a.days===null) return 1;
+      if(b.days===null) return -1;
+      return a.days-b.days;
+    });
+    const daySummaryHtml = daySummary.map(d=>{
+      const cls = d.days===null?'':(d.days<3?'v warn':d.days<10?'v y':'v g');
+      return `<div class="row" style="padding:4px 0"><span class="l" style="color:rgba(255,255,255,.85)">${r_escapeHtml(d.name)}</span><span class="${cls||'v'}" style="${cls?'':'color:#FFF'}">${d.days!==null? r_fm(d.days,1)+' 天':'暂无消费记录'}</span></div>`;
+    }).join('');
+    const ydRowHtml = `
+      <div class="ydrow">
+        <div class="ydcell"><div class="yl">📉 昨日消费额度</div><div class="yv warn">${r_fm(ydConsumedQuotaSum,2)}</div></div>
+        <div class="ydcell"><div class="yl">📉 昨日消费金额</div><div class="yv warn">¥${r_fm(ydConsumedRMBSum,2)}</div></div>
+        <div class="ydcell"><div class="yl">📈 昨日额度增长</div><div class="yv g">${r_fm(ydGrowthQuotaSum,2)}</div></div>
+        <div class="ydcell"><div class="yl">📈 昨日金额增长</div><div class="yv g">¥${r_fm(ydGrowthRMBSum,2)}</div></div>
+      </div>`;
+    r_cachedViews=views;
+    r_cachedMeta={totalRMB:totalRMB, ydRowHtml:ydRowHtml, daySummaryHtml:daySummaryHtml, count:stations.length};
+    r_paint();
+  }catch(e){
+    root.innerHTML=`<div class="err">加载失败：${r_escapeHtml(e.message)}</div>`;
+  }
+}
+function r_escapeHtml(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML}
+
+function r_showCfgModal(){
+  document.getElementById('rcfgUrl').value = localStorage.getItem('hsb_supabase_url') || '';
+  document.getElementById('rcfgKey').value = localStorage.getItem('hsb_supabase_key') || '';
+  document.getElementById('rcfgModal').style.display = 'flex';
+}
+function r_hideCfgModal(){
+  document.getElementById('rcfgModal').style.display = 'none';
+}
+function r_saveCfgLocal(){
+  const u = (document.getElementById('rcfgUrl').value || '').trim().replace(/\/+$/, '');
+  const k = (document.getElementById('rcfgKey').value || '').trim();
+  if(!u || !k){ document.getElementById('rcfgMsg').textContent='请完整填写 Supabase URL 和 Key'; return; }
+  localStorage.setItem('hsb_supabase_url', u);
+  localStorage.setItem('hsb_supabase_key', k);
+  r_hideCfgModal();
+  r_render();
+}
+let _bridgeAttempts=0;
+function r_waitForBridge(){
+  _bridgeAttempts++;
+  if(typeof Bridge!=='undefined' && (Bridge.getPluginConfig || Bridge.getConfig)){
+    r_render();
+  }else if(localStorage.getItem('hsb_supabase_url') && localStorage.getItem('hsb_supabase_key')){
+    r_render();
+  }else if(_bridgeAttempts<8){
+    setTimeout(r_waitForBridge,40);
+  }else{
+    r_render();
+  }
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',r_waitForBridge);
+}else{
+  r_waitForBridge();
+}
+
+
+function c_tg(){var s=document.getElementById('page-convert'),d=s.classList.toggle('dark');document.getElementById('cti').textContent=d?'🌙':'☀️';try{localStorage.setItem('theme',d?'dark':'light')}catch(e){}}
+(function(){var dark=false;try{dark=localStorage.getItem('theme')==='dark'}catch(e){}if(dark){document.getElementById('page-convert').classList.add('dark');document.getElementById('cti').textContent='🌙'}})();
+function c_st(i){document.querySelectorAll('.ti').forEach(function(t,j){t.classList.toggle('a',j===i)});document.querySelectorAll('.tp').forEach(function(p,j){p.classList.toggle('a',j===i)})}
+function c_cl(id){var e=document.getElementById(id);e.value='';e.dispatchEvent(new Event('input'));e.focus()}
+function c_gv(id){var v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v}
+function c_fm(n,d){if(n===null||n===undefined||isNaN(n)||!isFinite(n))return'—';return d===undefined?parseFloat(n.toFixed(8)).toString():parseFloat(n.toFixed(d)).toString()}
+// 换算工具直接读填入的正式数值，不解析备注：正常单价来自第一部分
+// （正常充值金额/正常得额度，即站点的 normal_recharge_amount/normal_received_quota），
+// 实际单价来自第二部分（实际充值金额/实际得额度）；折中单价与看板的
+// effective_price_per_quota 同口径：两种价都有取平均，只有一种价就用它。
+function c_nup(){var r=c_gv('rp');return r&&r>0?1/r:null}
+function c_aup(){var a=c_gv('aa'),q=c_gv('aq');return a&&q&&a>0&&q>0?a/q:null}
+function c_bup(){var n=c_nup(),a=c_aup();if(n!==null&&a!==null)return (n+a)/2;if(n!==null)return n;if(a!==null)return a;return null}
+function c_gr(){var b=c_bup();return b?1/b:null}
+function c_gq(){return c_gv('rq')}
+function c_upd(){var n=c_nup(),a=c_aup(),b=c_bup();var ab=document.getElementById('abr');if(a!==null){ab.style.display='block';document.getElementById('aar').textContent=c_fm(c_gv('aq')/c_gv('aa'));document.getElementById('arp').textContent=c_fm(a,8)}else{ab.style.display='none'}var mx=document.getElementById('mxr');if(n!==null||a!==null){mx.style.display='block';document.getElementById('mnp').textContent=n!==null?c_fm(n,8):'—';document.getElementById('map').textContent=a!==null?c_fm(a,8):'—';document.getElementById('mmp').textContent=b!==null?c_fm(b,8):'—';document.getElementById('mmd').textContent=(n!==null&&a!==null)?c_fm(b/n*10,2)+' 折（'+c_fm(b/n,4)+'）':(n!==null?'—（未充值，不计算折扣）':'—')}else{mx.style.display='none'}var sq=c_gv('sq'),sb=document.getElementById('sqr');if(sq!==null&&sq>=0){sb.style.display='block';document.getElementById('squ').textContent=b!==null?c_fm(b,8):'需先填正常价或实际充值';document.getElementById('sqy').textContent=b!==null?c_fm(sq*b,8):'—'}else{sb.style.display='none'}}
+function c_ca(){c_upd();c_cpc();c_ctk();c_cbl();c_cav()}
+function c_csq(){c_upd()}
+function c_sbr(r){document.getElementById('br').style.display='block';document.getElementById('rd').textContent=c_fm(r);document.getElementById('rr2').textContent=c_fm(1/r,8)}
+function c_cr(){var a=c_gv('ra'),q=c_gv('rq');if(a&&q&&a>0){var r=q/a;document.getElementById('rp').value=c_fm(r);c_sbr(r)}else{var mr=c_gv('rp');if(mr&&mr>0)c_sbr(mr);else document.getElementById('br').style.display='none'}c_upd();c_cpc();c_ctk();c_cbl();c_cav()}
+function c_rm(){var r=c_gv('rp');if(r&&r>0)c_sbr(r);else document.getElementById('br').style.display='none';c_upd();c_cpc();c_ctk();c_cbl();c_cav()}
+function c_cpc(){var c=c_gv('pc'),r=c_gr(),q=c_gq(),b=document.getElementById('pcr');if(!c||c<=0){b.style.display='none';return}b.style.display='block';if(r){document.getElementById('pcy').textContent=c_fm(c/r,6);document.getElementById('pcp').textContent=c_fm(r/c)}else{document.getElementById('pcy').textContent='需填写比例';document.getElementById('pcp').textContent='—'}document.getElementById('pct').textContent=q?c_fm(Math.floor(q/c)):'需填写总额度'}
+function c_ctk(){var ip=c_gv('ip'),op=c_gv('op'),it=c_gv('it'),ot=c_gv('ot'),r=c_gr(),q=c_gq(),b=document.getElementById('tkr');var hp=(ip!==null&&ip>=0)||(op!==null&&op>=0),ht=(it!==null&&it>=0)||(ot!==null&&ot>=0);if(!hp||!ht){b.style.display='none';return}b.style.display='block';var ic=(ip||0)*(it||0)/1e6,oc=(op||0)*(ot||0)/1e6,tc=ic+oc;document.getElementById('iqc').textContent=c_fm(ic,6);document.getElementById('oqc').textContent=c_fm(oc,6);document.getElementById('tqc').textContent=c_fm(tc,6);document.getElementById('tyc').textContent=r&&tc>0?c_fm(tc/r,8):r?c_fm(0):'需填写比例';document.getElementById('ttt').textContent=q&&tc>0?c_fm(Math.floor(q/tc))+' 次':'—'}
+function c_cbl(){var rm2=c_gv('rmq'),u=c_gv('uq'),r=c_gr(),b=document.getElementById('blr'),hr=rm2!==null&&rm2>=0,hu=u!==null&&u>=0;if(!hr&&!hu){b.style.display='none';return}b.style.display='block';document.getElementById('rmy').textContent=hr&&r?c_fm(rm2/r,6):hr?'需填写比例':'—';var sh=hu?'flex':'none',sd=hu?'block':'none';document.getElementById('ud').style.display=sd;document.getElementById('uyr').style.display=sh;document.getElementById('tbqr').style.display=sh;document.getElementById('tbyr').style.display=sh;if(hu){document.getElementById('uy').textContent=r?c_fm(u/r,6):'需填写比例';var tq=(rm2||0)+u;document.getElementById('tbq').textContent=c_fm(tq);document.getElementById('tby').textContent=r?c_fm(tq/r,6):'需填写比例';if(hr&&tq>0){document.getElementById('pd').style.display='block';document.getElementById('pr').style.display='flex';document.getElementById('rpc').textContent=c_fm(rm2/tq*100,1)+'%'}else{document.getElementById('pd').style.display='none';document.getElementById('pr').style.display='none'}}else{document.getElementById('pd').style.display='none';document.getElementById('pr').style.display='none'}}
+function c_cav(){var uq=c_gv('auq'),dy=c_gv('ad'),ca=c_gv('ac'),rq=c_gv('arq'),r=c_gr(),b=document.getElementById('avr');if(!uq||uq<=0||!dy||dy<=0){b.style.display='none';return}b.style.display='block';var dq=uq/dy;document.getElementById('adq').textContent=c_fm(dq,4);var yr=document.getElementById('adyr');if(r){yr.style.display='flex';document.getElementById('ady').textContent=c_fm(dq/r,6)}else yr.style.display='none';var hc=ca&&ca>0;document.getElementById('av1').style.display=hc?'block':'none';document.getElementById('acdr').style.display=hc?'flex':'none';document.getElementById('apcr').style.display=hc?'flex':'none';if(hc){document.getElementById('acd').textContent=c_fm(ca/dy,2);document.getElementById('apc2').textContent=c_fm(uq/ca,6)}var hr=rq&&rq>0&&dq>0;document.getElementById('av2').style.display=hr?'block':'none';document.getElementById('ardr').style.display=hr?'flex':'none';document.getElementById('artr').style.display=hr?'flex':'none';if(hr){var dl=rq/dq;document.getElementById('ard').textContent=c_fm(dl,1)+' 天';var ed=new Date;ed.setDate(ed.getDate()+Math.floor(dl));var wd=['日','一','二','三','四','五','六'];document.getElementById('art').textContent=(ed.getMonth()+1)+'月'+ed.getDate()+'日 周'+wd[ed.getDay()]}}
+function c_ra(){document.querySelectorAll('.fi').forEach(function(e){e.value=''});document.querySelectorAll('.rx').forEach(function(e){e.style.display='none'});['ud','uyr','tbqr','tbyr','pd','pr','adyr','av1','acdr','apcr','av2','ardr','artr'].forEach(function(id){document.getElementById(id).style.display='none'})}
+</script>
+</body>
+</html>
