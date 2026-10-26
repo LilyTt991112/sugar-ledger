@@ -965,6 +965,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
       <label for="cfgKey">Supabase Anon Key</label>
       <input type="password" id="cfgKey" placeholder="eyJ...">
     </div>
+    <div id="pSyncBox" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:10px;background:var(--bg);">
+      <p style="font-size:12px;color:var(--text-2);margin-bottom:8px;">检测到中转站已有填写配置，可选是否同步中转站的 Supabase 配置。</p>
+      <button class="btn secondary" type="button" onclick="p_syncFromRelay()">一键填写中转站的 Supabase 配置</button>
+      <p style="font-size:11px;color:var(--text-2);margin-top:8px;">只把配置填进上面输入框，不会直接保存，确认无误后请手动点“保存并连接”。</p>
+    </div>
     <div class="modal-actions">
       <button class="btn secondary" type="button" onclick="p_hideCfgModal()">取消</button>
       <button class="btn primary" type="button" onclick="p_saveCfgLocal()">保存并连接</button>
@@ -995,6 +1000,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
     <div style="margin-bottom:16px;">
       <label style="display:block;font-size:12px;color:var(--ts);margin-bottom:4px;">Supabase Anon Key</label>
       <input id="rcfgKey" type="password" placeholder="eyJ..." style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--cbd);background:var(--bg);color:var(--t);font-size:14px;outline:none;">
+    </div>
+    <div id="rSyncBox" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:10px;background:var(--bg);">
+      <p style="font-size:12px;color:var(--ts);margin-bottom:8px;">检测到账本已有填写配置，可选是否同步账本的 Supabase 配置。</p>
+      <button type="button" onclick="r_syncFromPersonal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--cbd);background:transparent;color:var(--st);font-weight:600;cursor:pointer;">一键填写账本的 Supabase 配置</button>
+      <p style="font-size:11px;color:var(--ts);margin-top:8px;">只把配置填进上面输入框，不会直接保存，确认无误后请手动点“保存并刷新”。</p>
     </div>
     <p id="rcfgMsg" style="color:var(--warn);font-size:12px;min-height:16px;margin-bottom:8px;"></p><div style="display:flex;gap:10px;">
       <button type="button" onclick="r_hideCfgModal()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--cbd);background:transparent;color:var(--ts);font-weight:600;cursor:pointer;">取消</button>
@@ -1196,8 +1206,21 @@ function p_showCfgModal() {
   try {
     document.getElementById('cfgUrl').value = supabaseUrl || localStorage.getItem('muse_ledger_supabase_url') || '';
     document.getElementById('cfgKey').value = supabaseKey || localStorage.getItem('muse_ledger_supabase_key') || '';
+    var hasRelay = !!(localStorage.getItem('hsb_supabase_url') && localStorage.getItem('hsb_supabase_key'));
+    document.getElementById('pSyncBox').style.display = hasRelay ? 'block' : 'none';
   } catch (e) {}
   document.getElementById('cfgModal').classList.add('show');
+}
+
+// 只把中转站已填的配置填进账本输入框，不保存、不连接，必须手动点“保存并连接”才生效。
+function p_syncFromRelay() {
+  try {
+    var u = localStorage.getItem('hsb_supabase_url') || '';
+    var k = localStorage.getItem('hsb_supabase_key') || '';
+    if (!u || !k) return;
+    document.getElementById('cfgUrl').value = u;
+    document.getElementById('cfgKey').value = k;
+  } catch (e) {}
 }
 
 function p_hideCfgModal(e) {
@@ -2347,7 +2370,18 @@ function r_escapeHtml(s){const d=document.createElement('div');d.textContent=s==
 function r_showCfgModal(){
   document.getElementById('rcfgUrl').value = localStorage.getItem('hsb_supabase_url') || '';
   document.getElementById('rcfgKey').value = localStorage.getItem('hsb_supabase_key') || '';
+  var hasPersonal = !!(localStorage.getItem('muse_ledger_supabase_url') && localStorage.getItem('muse_ledger_supabase_key'));
+  document.getElementById('rSyncBox').style.display = hasPersonal ? 'block' : 'none';
   document.getElementById('rcfgModal').style.display = 'flex';
+}
+
+// 只把账本已填的配置填进中转站输入框，不保存、不刷新，必须手动点“保存并刷新”才生效。
+function r_syncFromPersonal(){
+  var pu = localStorage.getItem('muse_ledger_supabase_url') || '';
+  var pk = localStorage.getItem('muse_ledger_supabase_key') || '';
+  if (!pu || !pk) return;
+  document.getElementById('rcfgUrl').value = pu;
+  document.getElementById('rcfgKey').value = pk;
 }
 function r_hideCfgModal(){
   document.getElementById('rcfgModal').style.display = 'none';
